@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carniceria Santa Cruz | Productos</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="productos">
+  <div class="page-shell">
+    <section class="app">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <p class="eyebrow">Sistema comercial</p>
+          <h2>Santa Cruz</h2>
+          <p class="side-copy">
+            Gestion del catalogo con mejor lectura y un alta de productos mas limpia.
+          </p>
+        </div>
+
+        <nav class="nav-list">
+          <a class="nav-link" data-page-link="resumen" href="./resumen.html"><span class="nav-mark">RS</span><span>Resumen</span></a>
+          <a class="nav-link" data-page-link="ventas" href="./ventas.html"><span class="nav-mark">VT</span><span>Ventas</span></a>
+          <a class="nav-link" data-page-link="productos" href="./productos.html"><span class="nav-mark">PR</span><span>Productos</span></a>
+          <a class="nav-link" data-page-link="clientes" href="./clientes.html"><span class="nav-mark">CL</span><span>Clientes</span></a>
+          <a class="nav-link" data-page-link="inventario" href="./inventario.html"><span class="nav-mark">IN</span><span>Inventario</span></a>
+          <a class="nav-link" data-page-link="credito" href="./credito.html"><span class="nav-mark">CR</span><span>Credito</span></a>
+          <a class="nav-link" data-page-link="facturas" href="./facturas.html"><span class="nav-mark">FC</span><span>Facturas</span></a>
+          <a class="nav-link" data-page-link="cortes" href="./cortes.html"><span class="nav-mark">CT</span><span>Cortes</span></a>
+        </nav>
+
+        <div class="side-pattern"></div>
+        <p class="side-foot">Modulo separado a partir de la ventana `Productos.java`.</p>
+        <a class="ghost-button full side-button" href="./index.html">Volver al login</a>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Panel principal</p>
+            <h1 id="currentSection">Productos</h1>
+          </div>
+
+          <div class="header-tools">
+            <div class="header-chip">
+              <span>Fecha</span>
+              <strong id="todayLabel"></strong>
+            </div>
+            <div class="header-chip">
+              <span>Operador</span>
+              <strong id="operatorLabel"></strong>
+            </div>
+          </div>
+        </header>
+
+        <section class="view active">
+          <div class="section-title reveal">
+            <div>
+              <p class="eyebrow">Catalogo</p>
+              <h2>Productos</h2>
+            </div>
+            <span class="badge-soft">Nuevo + Actualizar + Catalogo</span>
+          </div>
+
+          <div class="stats-grid compact reveal delay-1">
+            <article class="stat-card">
+              <span>Total catalogo</span>
+              <strong id="productCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span>Categorias activas</span>
+              <strong id="productCategoryCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span>Stock critico</span>
+              <strong id="productLowCount">0</strong>
+            </article>
+          </div>
+
+          <div class="split-grid wide reveal delay-2">
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Nuevo producto</p>
+                  <h3>Alta de catalogo</h3>
+                </div>
+              </div>
+
+              <form class="form-grid" id="productForm">
+                <label class="field">
+                  <span>Codigo de barras</span>
+                  <input id="productCode" type="text" placeholder="770999">
+                </label>
+                <label class="field">
+                  <span>Nombre</span>
+                  <input id="productName" type="text" placeholder="Punta de anca">
+                </label>
+                <label class="field">
+                  <span>Categoria</span>
+                  <select id="productCategory">
+                    <option value="">Seleccionar</option>
+                    <option value="Carne de Res">Carne de Res</option>
+                    <option value="Viceras">Viceras</option>
+                    <option value="Cerdo">Cerdo</option>
+                    <option value="Pollo">Pollo</option>
+                    <option value="Colegio">Colegio</option>
+                    <option value="Salsamentaria">Salsamentaria</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Precio</span>
+                  <input id="productPrice" type="number" min="0" step="500" placeholder="25000">
+                </label>
+                <label class="field">
+                  <span>Stock inicial</span>
+                  <input id="productStock" type="number" min="0" step="0.1" placeholder="10">
+                </label>
+                <label class="field">
+                  <span>Unidad</span>
+                  <select id="productUnit">
+                    <option value="kg">Kg</option>
+                    <option value="unidad">Unidad</option>
+                  </select>
+                </label>
+                <label class="field full-row">
+                  <span>Descripcion</span>
+                  <textarea id="productDescription" rows="4" placeholder="Describe el corte o la presentacion"></textarea>
+                </label>
+                <button class="primary-button" type="submit">Agregar producto</button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Lista de productos</p>
+                  <h3>Catalogo activo</h3>
+                </div>
+                <label class="filter-inline">
+                  <span>Filtrar</span>
+                  <select id="productFilter">
+                    <option value="Todos">Todos</option>
+                    <option value="Carne de Res">Carne de Res</option>
+                    <option value="Viceras">Viceras</option>
+                    <option value="Cerdo">Cerdo</option>
+                    <option value="Pollo">Pollo</option>
+                    <option value="Colegio">Colegio</option>
+                    <option value="Salsamentaria">Salsamentaria</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Codigo</th>
+                      <th>Nombre</th>
+                      <th>Categoria</th>
+                      <th>Precio</th>
+                      <th>Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productsTable"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

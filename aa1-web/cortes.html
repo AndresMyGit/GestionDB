@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carniceria Santa Cruz | Cortes</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="cortes">
+  <div class="page-shell">
+    <section class="app">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <p class="eyebrow">Sistema comercial</p>
+          <h2>Santa Cruz</h2>
+          <p class="side-copy">
+            Lectura financiera por periodo con indicadores y distribucion de pagos.
+          </p>
+        </div>
+
+        <nav class="nav-list">
+          <a class="nav-link" data-page-link="resumen" href="./resumen.html"><span class="nav-mark">RS</span><span>Resumen</span></a>
+          <a class="nav-link" data-page-link="ventas" href="./ventas.html"><span class="nav-mark">VT</span><span>Ventas</span></a>
+          <a class="nav-link" data-page-link="productos" href="./productos.html"><span class="nav-mark">PR</span><span>Productos</span></a>
+          <a class="nav-link" data-page-link="clientes" href="./clientes.html"><span class="nav-mark">CL</span><span>Clientes</span></a>
+          <a class="nav-link" data-page-link="inventario" href="./inventario.html"><span class="nav-mark">IN</span><span>Inventario</span></a>
+          <a class="nav-link" data-page-link="credito" href="./credito.html"><span class="nav-mark">CR</span><span>Credito</span></a>
+          <a class="nav-link" data-page-link="facturas" href="./facturas.html"><span class="nav-mark">FC</span><span>Facturas</span></a>
+          <a class="nav-link" data-page-link="cortes" href="./cortes.html"><span class="nav-mark">CT</span><span>Cortes</span></a>
+        </nav>
+
+        <div class="side-pattern"></div>
+        <p class="side-foot">Modulo separado a partir de la ventana `Corte.java`.</p>
+        <a class="ghost-button full side-button" href="./index.html">Volver al login</a>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Panel principal</p>
+            <h1 id="currentSection">Cortes</h1>
+          </div>
+
+          <div class="header-tools">
+            <div class="header-chip">
+              <span>Fecha</span>
+              <strong id="todayLabel"></strong>
+            </div>
+            <div class="header-chip">
+              <span>Operador</span>
+              <strong id="operatorLabel"></strong>
+            </div>
+          </div>
+        </header>
+
+        <section class="view active">
+          <div class="section-title reveal">
+            <div>
+              <p class="eyebrow">Cierre financiero</p>
+              <h2>Cortes de caja</h2>
+            </div>
+            <span class="badge-soft">Mes + Anio + Tendencias</span>
+          </div>
+
+          <div class="panel reveal delay-1">
+            <div class="filters-bar">
+              <label class="field short">
+                <span>Mes</span>
+                <select id="cutMonth">
+                  <option value="1">Enero</option>
+                  <option value="2">Febrero</option>
+                  <option value="3">Marzo</option>
+                  <option value="4">Abril</option>
+                  <option value="5" selected>Mayo</option>
+                  <option value="6">Junio</option>
+                  <option value="7">Julio</option>
+                  <option value="8">Agosto</option>
+                  <option value="9">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+              </label>
+
+              <label class="field short">
+                <span>Anio</span>
+                <select id="cutYear">
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="stats-grid compact">
+              <article class="stat-card">
+                <span>Ingreso del periodo</span>
+                <strong id="monthlyRevenue">$0</strong>
+              </article>
+              <article class="stat-card">
+                <span>Tickets emitidos</span>
+                <strong id="monthlyTickets">0</strong>
+              </article>
+              <article class="stat-card">
+                <span>Ticket promedio</span>
+                <strong id="monthlyAverage">$0</strong>
+              </article>
+              <article class="stat-card">
+                <span>Ventas a credito</span>
+                <strong id="monthlyCreditSales">$0</strong>
+              </article>
+            </div>
+
+            <div class="split-grid">
+              <article class="panel tonal">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Distribucion</p>
+                    <h3>Participacion por metodo de pago</h3>
+                  </div>
+                </div>
+                <div class="chart-bars" id="cutChart"></div>
+              </article>
+
+              <article class="panel tonal">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Lectura del mes</p>
+                    <h3>Insights del corte</h3>
+                  </div>
+                </div>
+                <div class="stack-list" id="cutInsights"></div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

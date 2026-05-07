@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carniceria Santa Cruz | Login</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="login">
+  <div class="page-shell">
+    <section class="login-screen">
+      <div class="login-hero reveal">
+        <p class="eyebrow">Reconstruccion visual</p>
+        <h1>Carniceria Santa Cruz</h1>
+        <p class="hero-copy">
+          El proyecto original en Java Swing ahora vive como una experiencia web mas clara,
+          moderna y lista para crecer hacia una app real.
+        </p>
+        <div class="hero-pills">
+          <span>Ventas rapidas</span>
+          <span>Inventario visible</span>
+          <span>Credito controlado</span>
+        </div>
+        <div class="hero-art">
+          <img src="./assets/hero-meat.png" alt="Ilustracion de cortes de carne">
+        </div>
+      </div>
+
+      <form class="login-card reveal delay-1" id="loginForm">
+        <div class="card-top">
+          <p class="eyebrow">Acceso demo</p>
+          <h2>Ingresa al panel</h2>
+          <p>
+            Ahora cada modulo vive en su propia pagina HTML: resumen, ventas, productos,
+            clientes, inventario, credito, facturas y cortes.
+          </p>
+        </div>
+
+        <label class="field">
+          <span>Usuario</span>
+          <input id="usernameInput" type="text" placeholder="Operador principal">
+        </label>
+
+        <label class="field">
+          <span>Contrasena</span>
+          <input id="passwordInput" type="password" placeholder="1234">
+        </label>
+
+        <p class="login-error" id="loginError"></p>
+
+        <div class="card-actions">
+          <button class="primary-button" type="submit">Ingresar</button>
+          <button class="ghost-button" type="button" id="demoButton">Cargar demo</button>
+          <button class="ghost-button" type="button" id="resetDemoButton">Reiniciar demo</button>
+        </div>
+
+        <div class="login-notes">
+          <div>
+            <strong>Base:</strong>
+            <span>Proyecto Java Swing AA1</span>
+          </div>
+          <div>
+            <strong>Salida:</strong>
+            <span>HTML, CSS y JS en multiples paginas</span>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

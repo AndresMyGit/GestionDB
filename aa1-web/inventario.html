@@ -122,7 +122,7 @@
 
                 <label class="field">
                   <span>Cantidad</span>
-                  <input id="inventoryAmount" type="number" min="0.1" step="0.1" placeholder="5">
+                  <input id="inventoryAmount" type="number" min="0.01" step="0.01" placeholder="5.00">
                 </label>
 
                 <button class="primary-button full" type="submit">Actualizar inventario</button>
@@ -136,7 +136,20 @@
                   <h3>Movimientos recientes</h3>
                 </div>
               </div>
-              <div class="timeline" id="inventoryMovements"></div>
+              <div class="table-wrap scroll-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Codigo</th>
+                      <th>Producto</th>
+                      <th>Motivo</th>
+                      <th>Cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventoryMovements"></tbody>
+                </table>
+              </div>
             </article>
           </div>
         </section>

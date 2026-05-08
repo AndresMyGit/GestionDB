@@ -1,5 +1,6 @@
-const STORAGE_KEY = "aa1-web-demo-store";
-const TODAY = "2026-05-07";
+const API_BASE = "/api";
+const SESSION_KEY = "gestiondb-session";
+const CART_KEY = "gestiondb-cart";
 
 const PAGE_TITLES = {
   login: "Acceso",
@@ -11,259 +12,6 @@ const PAGE_TITLES = {
   credito: "Credito",
   facturas: "Facturas",
   cortes: "Cortes"
-};
-
-const DEFAULT_STORE = {
-  operator: "",
-  products: [
-    {
-      code: "770101",
-      name: "Lomo fino",
-      category: "Carne de Res",
-      description: "Corte premium para parrilla y pedidos especiales.",
-      price: 32000,
-      stock: 18.5,
-      minStock: 10,
-      unit: "kg"
-    },
-    {
-      code: "770102",
-      name: "Costilla premium",
-      category: "Carne de Res",
-      description: "Ideal para coccion lenta y parrilla.",
-      price: 26800,
-      stock: 9.2,
-      minStock: 12,
-      unit: "kg"
-    },
-    {
-      code: "770201",
-      name: "Higado fresco",
-      category: "Viceras",
-      description: "Producto de alta rotacion en mostrador.",
-      price: 15000,
-      stock: 7,
-      minStock: 5,
-      unit: "kg"
-    },
-    {
-      code: "770301",
-      name: "Chuleta de cerdo",
-      category: "Cerdo",
-      description: "Corte clasico para menu diario.",
-      price: 21400,
-      stock: 11.5,
-      minStock: 8,
-      unit: "kg"
-    },
-    {
-      code: "770401",
-      name: "Pechuga deshuesada",
-      category: "Pollo",
-      description: "Presentacion limpia para restaurante y hogar.",
-      price: 18800,
-      stock: 22,
-      minStock: 10,
-      unit: "kg"
-    },
-    {
-      code: "770501",
-      name: "Combo escolar",
-      category: "Colegio",
-      description: "Paquete practico para despachos institucionales.",
-      price: 12000,
-      stock: 35,
-      minStock: 20,
-      unit: "unidad"
-    },
-    {
-      code: "770601",
-      name: "Salchicha artesanal",
-      category: "Salsamentaria",
-      description: "Elaboracion local con buena salida en mostrador.",
-      price: 17200,
-      stock: 16,
-      minStock: 12,
-      unit: "unidad"
-    },
-    {
-      code: "770602",
-      name: "Morcilla casera",
-      category: "Salsamentaria",
-      description: "Producto de rotacion alta en fin de semana.",
-      price: 14300,
-      stock: 5,
-      minStock: 8,
-      unit: "unidad"
-    }
-  ],
-  clients: [
-    {
-      id: 1,
-      document: "1023948576",
-      name: "Martha Rojas",
-      phone: "310 449 2811",
-      address: "Barrio Centro",
-      creditEnabled: true,
-      debt: 85000
-    },
-    {
-      id: 2,
-      document: "43192817",
-      name: "Jose Vargas",
-      phone: "312 784 5090",
-      address: "San Miguel",
-      creditEnabled: false,
-      debt: 132000
-    },
-    {
-      id: 3,
-      document: "1098823411",
-      name: "Lucia Bernal",
-      phone: "315 988 4102",
-      address: "Villa Esperanza",
-      creditEnabled: true,
-      debt: 0
-    },
-    {
-      id: 4,
-      document: "59877412",
-      name: "Carlos Duran",
-      phone: "320 400 1255",
-      address: "Altos del Sur",
-      creditEnabled: true,
-      debt: 42000
-    },
-    {
-      id: 5,
-      document: "1088457720",
-      name: "Nadia Pardo",
-      phone: "313 884 9931",
-      address: "La Floresta",
-      creditEnabled: true,
-      debt: 0
-    }
-  ],
-  invoices: [
-    {
-      id: "FAC-2041",
-      date: "2026-05-07",
-      employee: "Andres Cruz",
-      clientId: 1,
-      payment: "Efectivo",
-      received: 100000,
-      total: 92500,
-      change: 7500,
-      items: [
-        { code: "770101", name: "Lomo fino", quantity: 1.4, unit: "kg", price: 32000 },
-        { code: "770601", name: "Salchicha artesanal", quantity: 2, unit: "unidad", price: 17200 }
-      ]
-    },
-    {
-      id: "FAC-2038",
-      date: "2026-05-06",
-      employee: "Andres Cruz",
-      clientId: 4,
-      payment: "Credito",
-      received: 54000,
-      total: 54000,
-      change: 0,
-      items: [
-        { code: "770301", name: "Chuleta de cerdo", quantity: 1.5, unit: "kg", price: 21400 },
-        { code: "770401", name: "Pechuga deshuesada", quantity: 1.2, unit: "kg", price: 18800 }
-      ]
-    },
-    {
-      id: "FAC-2032",
-      date: "2026-05-03",
-      employee: "Lorena Diaz",
-      clientId: 5,
-      payment: "Transferencia",
-      received: 71000,
-      total: 71000,
-      change: 0,
-      items: [
-        { code: "770102", name: "Costilla premium", quantity: 1.1, unit: "kg", price: 26800 },
-        { code: "770602", name: "Morcilla casera", quantity: 3, unit: "unidad", price: 14300 }
-      ]
-    },
-    {
-      id: "FAC-1988",
-      date: "2026-04-27",
-      employee: "Lorena Diaz",
-      clientId: 3,
-      payment: "Tarjeta",
-      received: 116000,
-      total: 116000,
-      change: 0,
-      items: [
-        { code: "770101", name: "Lomo fino", quantity: 2.5, unit: "kg", price: 32000 },
-        { code: "770201", name: "Higado fresco", quantity: 1.2, unit: "kg", price: 15000 }
-      ]
-    },
-    {
-      id: "FAC-1924",
-      date: "2026-04-14",
-      employee: "Andres Cruz",
-      clientId: 2,
-      payment: "Credito",
-      received: 68000,
-      total: 68000,
-      change: 0,
-      items: [
-        { code: "770501", name: "Combo escolar", quantity: 3, unit: "unidad", price: 12000 },
-        { code: "770401", name: "Pechuga deshuesada", quantity: 1.7, unit: "kg", price: 18800 }
-      ]
-    }
-  ],
-  movements: [
-    {
-      id: 91,
-      productCode: "770102",
-      product: "Costilla premium",
-      quantity: "-3.2 kg",
-      date: "2026-05-07",
-      motive: "Salida por venta"
-    },
-    {
-      id: 90,
-      productCode: "770602",
-      product: "Morcilla casera",
-      quantity: "+8 und",
-      date: "2026-05-06",
-      motive: "Ingreso proveedor"
-    },
-    {
-      id: 89,
-      productCode: "770501",
-      product: "Combo escolar",
-      quantity: "+12 und",
-      date: "2026-05-05",
-      motive: "Devolucion"
-    },
-    {
-      id: 88,
-      productCode: "770201",
-      product: "Higado fresco",
-      quantity: "-1.5 kg",
-      date: "2026-05-04",
-      motive: "Salida manual"
-    },
-    {
-      id: 87,
-      productCode: "770101",
-      product: "Lomo fino",
-      quantity: "+6.0 kg",
-      date: "2026-05-03",
-      motive: "Ingreso proveedor"
-    }
-  ],
-  cart: [],
-  ui: {
-    selectedClientId: 1,
-    selectedInvoiceId: "FAC-2041",
-    selectedSaleClientId: 1
-  }
 };
 
 const monthNames = [
@@ -283,50 +31,68 @@ const monthNames = [
 ];
 
 const page = document.body.dataset.page || "login";
-const store = loadStore();
+const state = {
+  session: loadSession(),
+  cart: loadCart(),
+  products: [],
+  categories: [],
+  clients: [],
+  methods: [],
+  credits: [],
+  payments: [],
+  invoices: [],
+  selectedClientId: 0,
+  selectedCreditId: 0,
+  selectedInvoiceId: 0
+};
 
 function byId(id) {
   return document.getElementById(id);
 }
 
-function cloneDefaults() {
-  return JSON.parse(JSON.stringify(DEFAULT_STORE));
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY)) || null;
+  } catch (_error) {
+    return null;
+  }
 }
 
-function loadStore() {
-  const fallback = cloneDefaults();
+function saveSession(session) {
+  state.session = session;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
 
+function loadCart() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return fallback;
+    return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function saveCart() {
+  localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
+}
+
+async function api(path, options = {}) {
+  const request = {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json"
     }
+  };
 
-    const parsed = JSON.parse(raw);
-    return {
-      ...fallback,
-      ...parsed,
-      products: Array.isArray(parsed.products) ? parsed.products : fallback.products,
-      clients: Array.isArray(parsed.clients) ? parsed.clients : fallback.clients,
-      invoices: Array.isArray(parsed.invoices) ? parsed.invoices : fallback.invoices,
-      movements: Array.isArray(parsed.movements) ? parsed.movements : fallback.movements,
-      cart: Array.isArray(parsed.cart) ? parsed.cart : fallback.cart,
-      ui: {
-        ...fallback.ui,
-        ...(parsed.ui || {})
-      }
-    };
-  } catch (_error) {
-    return fallback;
+  if (options.body) {
+    request.body = JSON.stringify(options.body);
   }
-}
 
-function saveStore() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  } catch (_error) {
-    // If storage is unavailable, the demo still works for the current page session.
+  const response = await fetch(`${API_BASE}${path}`, request);
+  const data = await response.json();
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || "No se pudo completar la operacion");
   }
+  return data;
 }
 
 function redirectTo(pageName) {
@@ -335,11 +101,7 @@ function redirectTo(pageName) {
 }
 
 function ensureSession() {
-  if (page === "login") {
-    return;
-  }
-
-  if (!store.operator) {
+  if (page !== "login" && !state.session) {
     redirectTo("login");
   }
 }
@@ -348,20 +110,28 @@ function formatMoney(value) {
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
-    maximumFractionDigits: 0
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Number(value || 0));
 }
 
-function formatNumber(value, unit) {
-  if (unit === "unidad") {
-    return `${Math.round(value)} und`;
-  }
+function formatNumber(value, unit = "kg") {
+  const number = Number(value || 0);
+  return `${number.toFixed(2)} ${unit}`;
+}
 
-  return `${Number(value).toFixed(1)} kg`;
+function round2(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
 function formatDate(dateText) {
-  const date = new Date(`${dateText}T12:00:00`);
+  if (!dateText) {
+    return "-";
+  }
+  const date = new Date(`${String(dateText).slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return dateText;
+  }
   return new Intl.DateTimeFormat("es-CO", {
     day: "2-digit",
     month: "short",
@@ -369,50 +139,13 @@ function formatDate(dateText) {
   }).format(date);
 }
 
-function getClient(clientId) {
-  return store.clients.find((client) => client.id === clientId);
-}
-
-function getProduct(productCode) {
-  return store.products.find((product) => product.code === productCode);
-}
-
-function getCartTotal() {
-  return store.cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
-}
-
-function getLowStockProducts() {
-  return store.products.filter((product) => product.stock <= product.minStock);
-}
-
-function getCurrentInvoiceList() {
-  const monthElement = byId("invoiceMonth");
-  const yearElement = byId("invoiceYear");
-  const searchElement = byId("invoiceSearch");
-
-  const month = monthElement ? Number(monthElement.value) : 0;
-  const year = yearElement ? Number(yearElement.value) : 2026;
-  const search = searchElement ? searchElement.value.trim().toLowerCase() : "";
-
-  return store.invoices.filter((invoice) => {
-    const date = new Date(`${invoice.date}T12:00:00`);
-    const matchMonth = month === 0 || date.getMonth() + 1 === month;
-    const matchYear = date.getFullYear() === year;
-    const client = getClient(invoice.clientId);
-    const haystack = `${invoice.id} ${client.name} ${client.document} ${invoice.payment}`.toLowerCase();
-    const matchSearch = !search || haystack.includes(search);
-    return matchMonth && matchYear && matchSearch;
-  });
-}
-
-function getCurrentCutInvoices() {
-  const month = Number(byId("cutMonth").value);
-  const year = Number(byId("cutYear").value);
-
-  return store.invoices.filter((invoice) => {
-    const date = new Date(`${invoice.date}T12:00:00`);
-    return date.getMonth() + 1 === month && date.getFullYear() === year;
-  });
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function showToast(message, tone = "ok") {
@@ -429,7 +162,7 @@ function showToast(message, tone = "ok") {
 
   window.clearTimeout(showToast.timer);
   requestAnimationFrame(() => toast.classList.add("show"));
-  showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2600);
+  showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
 function syncShell() {
@@ -442,17 +175,16 @@ function syncShell() {
   }
 
   if (todayLabel) {
-    const labelDate = new Date(`${TODAY}T12:00:00`);
     todayLabel.textContent = new Intl.DateTimeFormat("es-CO", {
       weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric"
-    }).format(labelDate);
+    }).format(new Date());
   }
 
   if (operatorLabel) {
-    operatorLabel.textContent = store.operator || "Operador demo";
+    operatorLabel.textContent = state.session?.name || "Operador";
   }
 
   document.querySelectorAll("[data-page-link]").forEach((link) => {
@@ -460,178 +192,186 @@ function syncShell() {
   });
 }
 
-function renderOverview() {
-  const salesToday = store.invoices
-    .filter((invoice) => invoice.date === TODAY)
-    .reduce((sum, invoice) => sum + invoice.total, 0);
-  const totalDebt = store.clients.reduce((sum, client) => sum + client.debt, 0);
-  const lowStock = getLowStockProducts();
+function getProduct(code) {
+  return state.products.find((product) => String(product.code) === String(code));
+}
 
-  byId("statVentasDia").textContent = formatMoney(salesToday);
-  byId("statCredito").textContent = formatMoney(totalDebt);
-  byId("statBajoStock").textContent = String(lowStock.length);
-  byId("statFacturas").textContent = String(store.invoices.length);
-  byId("overviewLowStockCount").textContent = `${lowStock.length} activos`;
+function getClient(id) {
+  return state.clients.find((client) => Number(client.id) === Number(id));
+}
 
-  byId("overviewLowStock").innerHTML = lowStock.length
-    ? lowStock
+function getCartTotal() {
+  return round2(state.cart.reduce((sum, item) => sum + item.quantity * item.price, 0));
+}
+
+function paymentName() {
+  return byId("paymentMethod")?.value || "";
+}
+
+function renderOverview(data) {
+  byId("statVentasDia").textContent = formatMoney(data.salesToday);
+  byId("statCredito").textContent = formatMoney(data.totalDebt);
+  byId("statBajoStock").textContent = String(data.lowStockCount);
+  byId("statFacturas").textContent = String(data.invoiceCount);
+  byId("overviewLowStockCount").textContent = `${data.lowStock.length} activos`;
+
+  byId("overviewLowStock").innerHTML = data.lowStock.length
+    ? data.lowStock
         .map(
           (product) => `
             <div class="stack-item">
               <div>
-                <strong>${product.name}</strong>
-                <span class="subtle">${product.code} · ${product.category}</span>
+                <strong>${escapeHtml(product.name)}</strong>
+                <span class="subtle">${escapeHtml(product.code)} - ${escapeHtml(product.category)}</span>
               </div>
-              <strong class="tone-danger">${formatNumber(product.stock, product.unit)}</strong>
+              <strong class="tone-danger">${formatNumber(product.stock)}</strong>
             </div>
           `
         )
         .join("")
     : '<div class="stack-item"><strong>Todo el stock esta saludable.</strong></div>';
 
-  byId("overviewInvoices").innerHTML = store.invoices
-    .slice(0, 4)
-    .map((invoice) => {
-      const client = getClient(invoice.clientId);
-      return `
-        <div class="stack-item">
-          <div>
-            <strong>${invoice.id}</strong>
-            <span class="subtle">${client.name} · ${formatDate(invoice.date)}</span>
-          </div>
-          <strong>${formatMoney(invoice.total)}</strong>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-function renderSales() {
-  const total = getCartTotal();
-  const paymentMethod = byId("paymentMethod").value;
-  const received = paymentMethod === "Efectivo" ? Number(byId("cashInput").value || 0) : total;
-  const change = paymentMethod === "Efectivo" ? Math.max(received - total, 0) : 0;
-
-  if (!store.ui.selectedSaleClientId) {
-    store.ui.selectedSaleClientId = store.clients[0]?.id || 0;
-  }
-
-  byId("cartItems").textContent = String(store.cart.length);
-  byId("cartTotal").textContent = formatMoney(total);
-  byId("cartChange").textContent = formatMoney(change);
-  byId("paymentTotal").textContent = formatMoney(total);
-  byId("paymentReceived").textContent = formatMoney(received);
-  byId("paymentChange").textContent = formatMoney(change);
-  byId("saleSummaryBadge").textContent = `${store.cart.length} productos`;
-  byId("lastInvoiceLabel").textContent = store.ui.selectedInvoiceId || "Sin emitir";
-  byId("cashWrap").classList.toggle("hidden", paymentMethod !== "Efectivo");
-
-  byId("customerSelect").innerHTML = store.clients
-    .map(
-      (client) =>
-        `<option value="${client.id}" ${client.id === store.ui.selectedSaleClientId ? "selected" : ""}>${client.name} · ${client.document}</option>`
-    )
-    .join("");
-
-  byId("productSuggestions").innerHTML = store.products
-    .slice(0, 6)
-    .map(
-      (product) => `
-        <button type="button" data-code-pick="${product.code}">
-          ${product.name}
-        </button>
-      `
-    )
-    .join("");
-
-  byId("salesTable").innerHTML = store.cart.length
-    ? store.cart
+  byId("overviewInvoices").innerHTML = data.recentInvoices.length
+    ? data.recentInvoices
         .map(
-          (item) => `
-            <tr>
-              <td>${item.code}</td>
-              <td>${item.name}</td>
-              <td>${formatMoney(item.price)}</td>
-              <td>${formatNumber(item.quantity, item.unit)}</td>
-              <td>${formatMoney(item.quantity * item.price)}</td>
-              <td>
-                <button class="remove-button" type="button" data-remove-cart="${item.code}">
-                  Quitar
-                </button>
-              </td>
-            </tr>
+          (invoice) => `
+            <div class="stack-item">
+              <div>
+                <strong>FAC-${escapeHtml(invoice.id)}</strong>
+                <span class="subtle">${escapeHtml(invoice.client || "Cliente")} - ${formatDate(invoice.date)}</span>
+              </div>
+              <strong>${formatMoney(invoice.total)}</strong>
+            </div>
           `
         )
         .join("")
-    : `
-        <tr>
-          <td colspan="6">No hay productos en la venta actual.</td>
-        </tr>
-      `;
+    : '<div class="stack-item"><strong>No hay facturas registradas.</strong></div>';
+}
+
+async function loadOverview() {
+  renderOverview(await api("/resumen"));
+}
+
+function fillProductSelects() {
+  const productCategory = byId("productCategory");
+  const productFilter = byId("productFilter");
+  if (!productCategory || !productFilter) {
+    return;
+  }
+
+  const currentCategory = productCategory.value;
+  const currentFilter = productFilter.value || "Todos";
+  productCategory.innerHTML = '<option value="">Seleccionar</option>' +
+    state.categories
+      .map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`)
+      .join("");
+  productFilter.innerHTML = '<option value="Todos">Todos</option>' +
+    state.categories
+      .map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`)
+      .join("");
+  productCategory.value = currentCategory;
+  productFilter.value = currentFilter;
 }
 
 function renderProducts() {
+  fillProductSelects();
   const filter = byId("productFilter").value;
-  const visibleProducts = filter === "Todos"
-    ? store.products
-    : store.products.filter((product) => product.category === filter);
+  const products = filter === "Todos"
+    ? state.products
+    : state.products.filter((product) => String(product.categoryId) === String(filter));
 
-  byId("productCount").textContent = String(store.products.length);
-  byId("productCategoryCount").textContent = String(
-    new Set(store.products.map((product) => product.category)).size
-  );
-  byId("productLowCount").textContent = String(getLowStockProducts().length);
+  byId("productCount").textContent = String(state.products.length);
+  byId("productCategoryCount").textContent = String(state.categories.length);
+  byId("productLowCount").textContent = String(state.products.filter((product) => product.stock < 10).length);
 
-  byId("productsTable").innerHTML = visibleProducts
-    .map((product) => {
-      const stockClass = product.stock <= product.minStock ? "low" : "good";
-      return `
-        <tr>
-          <td>${product.code}</td>
-          <td>
-            <strong>${product.name}</strong>
-            <div class="subtle">${product.description}</div>
-          </td>
-          <td>${product.category}</td>
-          <td>${formatMoney(product.price)}</td>
-          <td><span class="stock-pill ${stockClass}">${formatNumber(product.stock, product.unit)}</span></td>
-        </tr>
-      `;
-    })
-    .join("");
+  byId("productsTable").innerHTML = products.length
+    ? products
+        .map((product) => {
+          const stockClass = product.stock < 10 ? "low" : "good";
+          return `
+            <tr>
+              <td>${escapeHtml(product.code)}</td>
+              <td>
+                <strong>${escapeHtml(product.name)}</strong>
+                <div class="subtle">${escapeHtml(product.description)}</div>
+              </td>
+              <td>${escapeHtml(product.category)}</td>
+              <td>${formatMoney(product.price)}</td>
+              <td><span class="stock-pill ${stockClass}">${formatNumber(product.stock)}</span></td>
+            </tr>
+          `;
+        })
+        .join("")
+    : '<tr><td colspan="5">No hay productos para este filtro.</td></tr>';
+}
+
+async function loadProducts() {
+  const data = await api("/productos");
+  state.products = data.products;
+  state.categories = data.categories;
+  renderProducts();
+}
+
+async function createProductFromForm() {
+  const payload = {
+    action: "create",
+    code: Number(byId("productCode").value),
+    name: byId("productName").value.trim(),
+    categoryId: Number(byId("productCategory").value),
+    price: Number(byId("productPrice").value),
+    stock: Number(byId("productStock").value),
+    description: byId("productDescription").value.trim()
+  };
+
+  if (!payload.code || !payload.name || !payload.categoryId || !payload.price || payload.stock < 0 || !payload.description) {
+    showToast("Completa todos los datos del producto.", "error");
+    return;
+  }
+
+  const result = await api("/productos", {
+    method: "POST",
+    body: payload
+  });
+
+  byId("productForm").reset();
+  byId("productUnit").value = "kg";
+  await loadProducts();
+  showToast(result.message || "Producto guardado.");
 }
 
 function renderClients() {
   const search = byId("clientSearch").value.trim().toLowerCase();
-  const visibleClients = store.clients.filter((client) => {
+  const visibleClients = state.clients.filter((client) => {
     const haystack = `${client.name} ${client.document}`.toLowerCase();
     return !search || haystack.includes(search);
   });
 
-  if (!visibleClients.some((client) => client.id === store.ui.selectedClientId) && visibleClients.length) {
-    store.ui.selectedClientId = visibleClients[0].id;
+  if (!visibleClients.some((client) => client.id === state.selectedClientId) && visibleClients.length) {
+    state.selectedClientId = visibleClients[0].id;
   }
 
-  byId("clientsList").innerHTML = visibleClients
-    .map(
-      (client) => `
-        <button class="client-item ${client.id === store.ui.selectedClientId ? "active" : ""}" type="button" data-client-pick="${client.id}">
-          <strong>${client.name}</strong>
-          <span class="subtle">${client.document} · ${client.phone}</span>
-        </button>
-      `
-    )
-    .join("");
+  byId("clientsList").innerHTML = visibleClients.length
+    ? visibleClients
+        .map(
+          (client) => `
+            <button class="client-item ${client.id === state.selectedClientId ? "active" : ""}" type="button" data-client-pick="${client.id}">
+              <strong>${escapeHtml(client.name)}</strong>
+              <span class="subtle">${escapeHtml(client.document)} - ${escapeHtml(client.phone)}</span>
+            </button>
+          `
+        )
+        .join("")
+    : '<div class="stack-item"><strong>No hay clientes para esta busqueda.</strong></div>';
 
-  const selected = getClient(store.ui.selectedClientId);
+  const selected = getClient(state.selectedClientId);
   if (!selected) {
     return;
   }
 
   byId("clientName").textContent = selected.name;
   byId("clientDocument").textContent = selected.document;
-  byId("clientPhone").textContent = selected.phone;
-  byId("clientAddress").textContent = selected.address;
+  byId("clientPhone").textContent = selected.phone || "-";
+  byId("clientAddress").textContent = selected.address || "-";
   byId("clientDebt").textContent = formatMoney(selected.debt);
   byId("clientCreditState").textContent = selected.creditEnabled ? "Credito habilitado" : "Credito bloqueado";
   byId("toggleCreditButton").textContent = selected.creditEnabled
@@ -639,120 +379,255 @@ function renderClients() {
     : "Habilitar credito del cliente";
 }
 
-function renderInventory() {
-  const lowStock = getLowStockProducts();
-  const selector = byId("inventoryProductSelect");
-  const currentSelection = selector.value || store.products[0]?.code || "";
+async function loadClients() {
+  const data = await api("/clientes");
+  state.clients = data.clients;
+  if (!state.selectedClientId && state.clients.length) {
+    state.selectedClientId = state.clients[0].id;
+  }
+  renderClients();
+}
 
-  byId("lowStockTable").innerHTML = lowStock.length
-    ? lowStock
+async function toggleSelectedClientCredit() {
+  const client = getClient(state.selectedClientId);
+  if (!client) {
+    return;
+  }
+
+  const result = await api("/clientes", {
+    method: "POST",
+    body: {
+      clientId: client.id,
+      enabled: !client.creditEnabled
+    }
+  });
+  await loadClients();
+  showToast(result.message || "Cliente actualizado.");
+}
+
+function renderInventory() {
+  const selector = byId("inventoryProductSelect");
+  const previous = selector.value || String(state.products[0]?.code || "");
+
+  byId("lowStockTable").innerHTML = state.lowStock?.length
+    ? state.lowStock
         .map(
           (product) => `
             <tr>
-              <td>${product.code}</td>
-              <td>${product.name}</td>
-              <td class="tone-danger">${formatNumber(product.stock, product.unit)}</td>
+              <td>${escapeHtml(product.code)}</td>
+              <td>${escapeHtml(product.name)}</td>
+              <td class="tone-danger">${formatNumber(product.stock)}</td>
             </tr>
           `
         )
         .join("")
     : '<tr><td colspan="3">No hay alertas criticas.</td></tr>';
 
-  selector.innerHTML = store.products
+  selector.innerHTML = state.products
     .map(
-      (product) =>
-        `<option value="${product.code}" ${product.code === currentSelection ? "selected" : ""}>${product.name}</option>`
+      (product) => `<option value="${product.code}">${escapeHtml(product.name)}</option>`
     )
     .join("");
+  selector.value = state.products.some((product) => String(product.code) === String(previous))
+    ? previous
+    : String(state.products[0]?.code || "");
 
   const selected = getProduct(selector.value);
-  if (selected) {
-    byId("inventoryCode").textContent = selected.code;
-    byId("inventoryCurrentStock").textContent = formatNumber(selected.stock, selected.unit);
-  }
+  byId("inventoryCode").textContent = selected?.code || "-";
+  byId("inventoryCurrentStock").textContent = selected ? formatNumber(selected.stock) : "-";
 
-  byId("inventoryMovements").innerHTML = store.movements
-    .slice(0, 7)
-    .map(
-      (movement) => `
-        <div class="timeline-item">
-          <strong>${movement.product}</strong>
-          <span class="subtle">${movement.productCode} · ${movement.motive}</span>
-          <strong>${movement.quantity}</strong>
-          <small>${formatDate(movement.date)}</small>
-        </div>
-      `
-    )
-    .join("");
-}
-
-function renderCredits() {
-  const debtClients = store.clients.filter((client) => client.debt > 0);
-  const blocked = store.clients.filter((client) => !client.creditEnabled);
-  const totalDebt = debtClients.reduce((sum, client) => sum + client.debt, 0);
-  const selector = byId("creditClientSelect");
-  const currentSelection = selector.value;
-
-  byId("creditClientCount").textContent = String(debtClients.length);
-  byId("creditTotalDebt").textContent = formatMoney(totalDebt);
-  byId("creditBlockedCount").textContent = String(blocked.length);
-
-  byId("creditsTable").innerHTML = debtClients.length
-    ? debtClients
-        .map(
-          (client) => `
-            <tr>
-              <td>${client.name}</td>
-              <td>${client.document}</td>
-              <td>${formatMoney(client.debt)}</td>
-              <td><span class="pill ${client.creditEnabled ? "ok" : "off"}">${client.creditEnabled ? "Activo" : "Bloqueado"}</span></td>
-            </tr>
-          `
-        )
-        .join("")
-    : '<tr><td colspan="4">No hay clientes con deuda.</td></tr>';
-
-  const selectionPool = debtClients.length ? debtClients : store.clients;
-  const selectedId = selectionPool.some((client) => String(client.id) === currentSelection)
-    ? Number(currentSelection)
-    : selectionPool[0]?.id;
-
-  selector.innerHTML = selectionPool
-    .map(
-      (client) =>
-        `<option value="${client.id}" ${client.id === selectedId ? "selected" : ""}>${client.name} · ${formatMoney(client.debt)}</option>`
-    )
-    .join("");
-}
-
-function renderInvoices() {
-  const filtered = getCurrentInvoiceList();
-
-  if (!filtered.some((invoice) => invoice.id === store.ui.selectedInvoiceId) && filtered.length) {
-    store.ui.selectedInvoiceId = filtered[0].id;
-  }
-
-  byId("invoiceCountLabel").textContent = String(filtered.length);
-  byId("invoicesTable").innerHTML = filtered.length
-    ? filtered
-        .map((invoice) => {
-          const client = getClient(invoice.clientId);
+  byId("inventoryMovements").innerHTML = state.movements?.length
+    ? state.movements
+        .map((movement) => {
+          const isSale = String(movement.motive).toLowerCase().includes("venta");
+          const raw = Number(movement.quantity || 0);
+          const sign = isSale || raw < 0 ? "-" : "+";
           return `
-            <tr class="invoice-row ${invoice.id === store.ui.selectedInvoiceId ? "active" : ""}" data-invoice-pick="${invoice.id}">
-              <td>${invoice.id}</td>
-              <td>${formatDate(invoice.date)}</td>
-              <td>${client.name}</td>
-              <td>${invoice.items.length}</td>
-              <td>${formatMoney(invoice.total)}</td>
-              <td>${invoice.payment}</td>
+            <tr>
+              <td>${escapeHtml(String(movement.date).slice(0, 16))}</td>
+              <td>${escapeHtml(movement.productCode)}</td>
+              <td>${escapeHtml(movement.product || "Producto")}</td>
+              <td>${escapeHtml(movement.motive)}</td>
+              <td>${sign}${formatNumber(Math.abs(raw))}</td>
             </tr>
           `;
         })
         .join("")
+    : '<tr><td colspan="5">No hay movimientos registrados.</td></tr>';
+}
+
+async function loadInventory() {
+  const data = await api("/inventario");
+  state.products = data.products;
+  state.lowStock = data.lowStock;
+  state.movements = data.movements;
+  renderInventory();
+}
+
+async function updateInventory() {
+  const result = await api("/inventario", {
+    method: "POST",
+    body: {
+      code: Number(byId("inventoryProductSelect").value),
+      mode: byId("inventoryMode").value,
+      amount: Number(byId("inventoryAmount").value)
+    }
+  });
+  byId("inventoryAmount").value = "";
+  await loadInventory();
+  showToast(result.message || "Inventario actualizado.");
+}
+
+function renderCredits() {
+  const openCredits = state.credits.filter((credit) => Number(credit.balance) > 0);
+  byId("creditClientCount").textContent = String(new Set(openCredits.map((credit) => credit.clientId)).size);
+  byId("creditTotalDebt").textContent = formatMoney(openCredits.reduce((sum, credit) => sum + Number(credit.balance), 0));
+  byId("creditBlockedCount").textContent = String(state.blockedCount || 0);
+
+  if (!state.selectedCreditId && state.credits.length) {
+    state.selectedCreditId = state.credits[0].id;
+  }
+
+  byId("creditsTable").innerHTML = state.credits.length
+    ? state.credits
+        .map(
+          (credit) => `
+            <tr class="invoice-row ${Number(credit.id) === Number(state.selectedCreditId) ? "active" : ""}" data-credit-pick="${credit.id}">
+              <td>
+                <strong>${escapeHtml(credit.client)}</strong>
+                <div class="subtle">FAC-${escapeHtml(credit.invoiceId)} - vence ${formatDate(credit.endDate)}</div>
+              </td>
+              <td>${escapeHtml(credit.document)}</td>
+              <td>${formatMoney(credit.balance)}</td>
+              <td><span class="stock-pill ${credit.state === "PAGADO" ? "good" : "low"}">${escapeHtml(credit.state)}</span></td>
+            </tr>
+          `
+        )
+        .join("")
+    : '<tr><td colspan="4">No hay creditos registrados.</td></tr>';
+
+  const selector = byId("creditClientSelect");
+  const previous = selector.value || state.selectedCreditId;
+  selector.innerHTML = state.credits.length
+    ? state.credits
+        .map(
+          (credit) => `<option value="${credit.id}">${escapeHtml(credit.client)} - FAC-${credit.invoiceId} - ${formatMoney(credit.balance)}</option>`
+        )
+        .join("")
+    : '<option value="">Sin creditos</option>';
+  selector.value = state.credits.some((credit) => String(credit.id) === String(previous))
+    ? previous
+    : String(state.credits[0]?.id || "");
+  state.selectedCreditId = Number(selector.value || 0);
+
+  const selected = state.credits.find((credit) => Number(credit.id) === Number(state.selectedCreditId));
+  const canPay = selected && Number(selected.balance) > 0;
+  byId("creditPayment").disabled = !canPay;
+  byId("applyCreditButton").disabled = !canPay;
+  byId("settleCreditButton").disabled = !canPay;
+
+  const history = state.selectedCreditId
+    ? state.payments.filter((payment) => Number(payment.creditId) === Number(state.selectedCreditId))
+    : state.payments;
+  byId("creditHistoryCount").textContent = `${history.length} movimientos`;
+  byId("creditHistoryTable").innerHTML = history.length
+    ? history
+        .map(
+          (payment) => `
+            <tr>
+              <td>${formatDate(payment.date)}</td>
+              <td>${escapeHtml(payment.client)}</td>
+              <td>${escapeHtml(payment.document)}</td>
+              <td>FAC-${escapeHtml(payment.invoiceId)}</td>
+              <td>${formatMoney(payment.amount)}</td>
+            </tr>
+          `
+        )
+        .join("")
+    : '<tr><td colspan="5">No hay abonos registrados para este credito.</td></tr>';
+}
+
+async function loadCredits() {
+  const data = await api("/credito");
+  state.credits = data.credits;
+  state.payments = data.payments || [];
+  state.blockedCount = data.blockedCount;
+  if (!state.credits.some((credit) => Number(credit.id) === Number(state.selectedCreditId))) {
+    state.selectedCreditId = state.credits[0]?.id || 0;
+  }
+  renderCredits();
+}
+
+async function applyCreditPayment(settleFull = false) {
+  const creditId = Number(byId("creditClientSelect").value);
+  const credit = state.credits.find((item) => Number(item.id) === creditId);
+  if (!credit) {
+    showToast("Selecciona un credito.", "error");
+    return;
+  }
+  if (Number(credit.balance) <= 0) {
+    showToast("Este credito ya esta saldado.", "error");
+    return;
+  }
+
+  const amount = settleFull ? Number(credit.balance) : Number(byId("creditPayment").value);
+  if (!amount || amount <= 0) {
+    showToast("Ingresa un abono valido.", "error");
+    return;
+  }
+
+  const result = await api("/credito", {
+    method: "POST",
+    body: {
+      creditId,
+      amount
+    }
+  });
+  byId("creditPayment").value = "";
+  await loadCredits();
+  showToast(result.message || "Abono registrado.");
+}
+
+async function blockOverdueClients() {
+  const result = await api("/credito", {
+    method: "POST",
+    body: {
+      action: "refreshOverdue"
+    }
+  });
+  await loadCredits();
+  showToast(`${result.updated || 0} creditos vencidos revisados.`);
+}
+
+function invoiceFilters() {
+  return new URLSearchParams({
+    month: byId("invoiceMonth").value,
+    year: byId("invoiceYear").value,
+    search: byId("invoiceSearch").value.trim(),
+    id: state.selectedInvoiceId || ""
+  });
+}
+
+function renderInvoices(detail) {
+  byId("invoiceCountLabel").textContent = String(state.invoices.length);
+  byId("invoicesTable").innerHTML = state.invoices.length
+    ? state.invoices
+        .map(
+          (invoice) => `
+            <tr class="invoice-row ${invoice.id === state.selectedInvoiceId ? "active" : ""}" data-invoice-pick="${invoice.id}">
+              <td>FAC-${escapeHtml(invoice.id)}</td>
+              <td>${formatDate(invoice.date)}</td>
+              <td>${escapeHtml(invoice.client || "Cliente")}</td>
+              <td>${escapeHtml(invoice.itemsCount)}</td>
+              <td>${formatMoney(invoice.total)}</td>
+              <td>${escapeHtml(invoice.payment)}</td>
+            </tr>
+          `
+        )
+        .join("")
     : '<tr><td colspan="6">No hay facturas para este filtro.</td></tr>';
 
-  const selected = filtered.find((invoice) => invoice.id === store.ui.selectedInvoiceId) || filtered[0];
-  if (!selected) {
+  if (!detail) {
     byId("invoiceDetails").innerHTML = `
       <div class="invoice-card">
         <h3>Sin factura</h3>
@@ -762,22 +637,21 @@ function renderInvoices() {
     return;
   }
 
-  const client = getClient(selected.clientId);
   byId("invoiceDetails").innerHTML = `
     <div class="invoice-card">
-      <h3>${selected.id}</h3>
-      <div class="subtle">${formatDate(selected.date)} · ${selected.employee}</div>
-      <div class="subtle">${client.name} · ${client.document}</div>
+      <h3>FAC-${escapeHtml(detail.id)}</h3>
+      <div class="subtle">${formatDate(detail.date)} - ${escapeHtml(detail.employee || "Empleado")}</div>
+      <div class="subtle">${escapeHtml(detail.client || "Cliente")} - ${escapeHtml(detail.document || "")}</div>
       <div class="invoice-lines">
-        ${selected.items
+        ${(detail.items || [])
           .map(
             (item) => `
               <div class="invoice-line">
                 <div>
-                  <strong>${item.name}</strong>
-                  <div class="subtle">${formatNumber(item.quantity, item.unit)} · ${formatMoney(item.price)}</div>
+                  <strong>${escapeHtml(item.name)}</strong>
+                  <div class="subtle">${formatNumber(item.quantity)} - ${formatMoney(item.price)}</div>
                 </div>
-                <strong>${formatMoney(item.quantity * item.price)}</strong>
+                <strong>${formatMoney(item.subtotal)}</strong>
               </div>
             `
           )
@@ -786,59 +660,51 @@ function renderInvoices() {
       <div class="invoice-lines">
         <div class="invoice-line">
           <span>Metodo de pago</span>
-          <strong>${selected.payment}</strong>
+          <strong>${escapeHtml(detail.payment)}</strong>
         </div>
         <div class="invoice-line">
           <span>Total</span>
-          <strong>${formatMoney(selected.total)}</strong>
+          <strong>${formatMoney(detail.total)}</strong>
         </div>
         <div class="invoice-line">
           <span>Recibido</span>
-          <strong>${formatMoney(selected.received)}</strong>
+          <strong>${formatMoney(detail.total)}</strong>
         </div>
         <div class="invoice-line">
           <span>Cambio</span>
-          <strong>${formatMoney(selected.change)}</strong>
+          <strong>${formatMoney(0)}</strong>
         </div>
       </div>
     </div>
   `;
 }
 
-function renderCuts() {
-  const cutInvoices = getCurrentCutInvoices();
-  const revenue = cutInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
-  const average = cutInvoices.length ? revenue / cutInvoices.length : 0;
-  const creditSales = cutInvoices
-    .filter((invoice) => invoice.payment === "Credito")
-    .reduce((sum, invoice) => sum + invoice.total, 0);
+async function loadInvoices() {
+  const data = await api(`/facturas?${invoiceFilters().toString()}`);
+  state.invoices = data.invoices;
+  state.selectedInvoiceId = data.detail?.id || state.invoices[0]?.id || 0;
+  renderInvoices(data.detail);
+}
 
-  byId("monthlyRevenue").textContent = formatMoney(revenue);
-  byId("monthlyTickets").textContent = String(cutInvoices.length);
-  byId("monthlyAverage").textContent = formatMoney(average);
-  byId("monthlyCreditSales").textContent = formatMoney(creditSales);
+function renderCuts(data) {
+  const summary = data.summary || {};
+  byId("monthlyRevenue").textContent = formatMoney(summary.revenue);
+  byId("monthlyTickets").textContent = String(summary.tickets || 0);
+  byId("monthlyAverage").textContent = formatMoney(summary.average);
+  byId("monthlyCreditSales").textContent = formatMoney(summary.creditSales);
 
-  const paymentTotals = ["Efectivo", "Tarjeta", "Transferencia", "Credito"]
-    .map((payment) => ({
-      payment,
-      total: cutInvoices
-        .filter((invoice) => invoice.payment === payment)
-        .reduce((sum, invoice) => sum + invoice.total, 0)
-    }))
-    .filter((row) => row.total > 0);
-
-  const maxTotal = Math.max(...paymentTotals.map((row) => row.total), 1);
-  byId("cutChart").innerHTML = paymentTotals.length
-    ? paymentTotals
+  const maxTotal = Math.max(...(data.payments || []).map((row) => Number(row.total)), 1);
+  byId("cutChart").innerHTML = data.payments?.length
+    ? data.payments
         .map(
           (row) => `
             <div class="chart-row">
               <header>
-                <strong>${row.payment}</strong>
+                <strong>${escapeHtml(row.payment)}</strong>
                 <span>${formatMoney(row.total)}</span>
               </header>
               <div class="chart-track">
-                <div class="chart-fill" style="width: ${(row.total / maxTotal) * 100}%"></div>
+                <div class="chart-fill" style="width: ${(Number(row.total) / maxTotal) * 100}%"></div>
               </div>
             </div>
           `
@@ -846,34 +712,31 @@ function renderCuts() {
         .join("")
     : '<div class="stack-item"><strong>No hay ventas para el periodo.</strong></div>';
 
-  const lowStock = getLowStockProducts();
-  const topInvoice = [...cutInvoices].sort((left, right) => right.total - left.total)[0];
-  const insights = [];
+  const insights = [
+    {
+      title: "Ticket promedio",
+      detail: summary.tickets
+        ? `El periodo tiene un promedio de ${formatMoney(summary.average)} por factura.`
+        : "No hay facturas en el periodo seleccionado."
+    },
+    {
+      title: "Cartera del periodo",
+      detail: summary.creditSales
+        ? `${formatMoney(summary.creditSales)} del periodo se fue a credito.`
+        : "No hubo ventas a credito en el periodo."
+    },
+    {
+      title: "Reposicion",
+      detail: data.lowStockCount
+        ? `${data.lowStockCount} productos necesitan reposicion.`
+        : "El nivel de inventario se ve estable."
+    }
+  ];
 
-  insights.push({
-    title: "Ticket promedio",
-    detail: cutInvoices.length
-      ? `El periodo se mueve con un promedio de ${formatMoney(average)} por factura.`
-      : "No hay facturas en el periodo seleccionado."
-  });
-  insights.push({
-    title: "Cartera en curso",
-    detail: creditSales
-      ? `${formatMoney(creditSales)} del periodo se fue a credito.`
-      : "No hubo ventas a credito en el periodo."
-  });
-  insights.push({
-    title: "Reposicion",
-    detail: lowStock.length
-      ? `${lowStock.length} productos necesitan reposicion pronto.`
-      : "El nivel de inventario se ve estable."
-  });
-
-  if (topInvoice) {
-    const client = getClient(topInvoice.clientId);
+  if (data.topInvoice) {
     insights.push({
       title: "Factura mas alta",
-      detail: `${topInvoice.id} para ${client.name} por ${formatMoney(topInvoice.total)}.`
+      detail: `FAC-${data.topInvoice.id} para ${data.topInvoice.client || "cliente"} por ${formatMoney(data.topInvoice.total)}.`
     });
   }
 
@@ -882,8 +745,8 @@ function renderCuts() {
       (item) => `
         <div class="stack-item">
           <div>
-            <strong>${item.title}</strong>
-            <span class="subtle">${item.detail}</span>
+            <strong>${escapeHtml(item.title)}</strong>
+            <span class="subtle">${escapeHtml(item.detail)}</span>
           </div>
         </div>
       `
@@ -891,40 +754,99 @@ function renderCuts() {
     .join("");
 }
 
-function renderCurrentPage() {
-  syncShell();
+async function loadCuts() {
+  const params = new URLSearchParams({
+    month: byId("cutMonth").value,
+    year: byId("cutYear").value
+  });
+  renderCuts(await api(`/cortes?${params.toString()}`));
+}
 
-  if (page === "resumen") {
-    renderOverview();
-  }
+function fillSalesSelects() {
+  const clientSelect = byId("customerSelect");
+  const currentClient = clientSelect.value || String(state.clients[0]?.id || "");
+  clientSelect.innerHTML = state.clients
+    .map(
+      (client) => `<option value="${client.id}">${escapeHtml(client.name)} - ${escapeHtml(client.document)}</option>`
+    )
+    .join("");
+  clientSelect.value = state.clients.some((client) => String(client.id) === String(currentClient))
+    ? currentClient
+    : String(state.clients[0]?.id || "");
 
-  if (page === "ventas") {
-    renderSales();
-  }
+  const methodSelect = byId("paymentMethod");
+  const currentMethod = methodSelect.value;
+  methodSelect.innerHTML = '<option value="">Seleccionar</option>' +
+    state.methods
+      .map((method) => `<option value="${escapeHtml(method.name)}">${escapeHtml(method.name)}</option>`)
+      .join("");
+  methodSelect.value = currentMethod;
+}
 
-  if (page === "productos") {
-    renderProducts();
-  }
+function renderSales() {
+  fillSalesSelects();
+  const total = getCartTotal();
+  const method = paymentName();
+  const selectedClient = getClient(Number(byId("customerSelect").value));
+  const creditBlocked = method === "Credito" && selectedClient && !selectedClient.creditEnabled;
+  const received = method === "Efectivo" ? Number(byId("cashInput").value || 0) : total;
+  const change = method === "Efectivo" ? Math.max(received - total, 0) : 0;
 
-  if (page === "clientes") {
-    renderClients();
-  }
+  byId("cartItems").textContent = String(state.cart.length);
+  byId("cartTotal").textContent = formatMoney(total);
+  byId("cartChange").textContent = formatMoney(change);
+  byId("paymentTotal").textContent = formatMoney(total);
+  byId("paymentReceived").textContent = formatMoney(received);
+  byId("paymentChange").textContent = formatMoney(change);
+  byId("saleSummaryBadge").textContent = creditBlocked ? "Credito bloqueado" : `${state.cart.length} productos`;
+  byId("lastInvoiceLabel").textContent = state.lastInvoiceId ? `FAC-${state.lastInvoiceId}` : "Sin emitir";
+  byId("cashWrap").classList.toggle("hidden", method !== "Efectivo");
+  byId("checkoutButton").disabled = creditBlocked;
+  byId("checkoutButton").title = creditBlocked
+    ? "El cliente tiene el credito bloqueado"
+    : "";
 
-  if (page === "inventario") {
-    renderInventory();
-  }
+  byId("productSuggestions").innerHTML = state.products
+    .filter((product) => Number(product.stock) > 0)
+    .slice(0, 6)
+    .map(
+      (product) => `
+        <button type="button" data-code-pick="${product.code}">
+          ${escapeHtml(product.name)}
+        </button>
+      `
+    )
+    .join("");
 
-  if (page === "credito") {
-    renderCredits();
-  }
+  byId("salesTable").innerHTML = state.cart.length
+    ? state.cart
+        .map(
+          (item) => `
+            <tr>
+              <td>${escapeHtml(item.code)}</td>
+              <td>${escapeHtml(item.name)}</td>
+              <td>${formatMoney(item.price)}</td>
+              <td>${formatNumber(item.quantity)}</td>
+              <td>${formatMoney(round2(item.quantity * item.price))}</td>
+              <td>
+                <button class="remove-button" type="button" data-remove-cart="${item.code}">
+                  Quitar
+                </button>
+              </td>
+            </tr>
+          `
+        )
+        .join("")
+    : '<tr><td colspan="6">No hay productos en la venta actual.</td></tr>';
+}
 
-  if (page === "facturas") {
-    renderInvoices();
-  }
-
-  if (page === "cortes") {
-    renderCuts();
-  }
+async function loadSales() {
+  const data = await api("/ventas");
+  state.products = data.products;
+  state.clients = data.clients;
+  state.methods = data.methods;
+  state.lastInvoiceId = data.lastInvoiceId;
+  renderSales();
 }
 
 function addProductToCart(rawQuery, rawQuantity) {
@@ -934,333 +856,93 @@ function addProductToCart(rawQuery, rawQuantity) {
     return;
   }
 
-  const product = store.products.find((item) =>
-    item.code.toLowerCase() === query || item.name.toLowerCase().includes(query)
+  const product = state.products.find((item) =>
+    String(item.code).toLowerCase() === query || String(item.name).toLowerCase().includes(query)
   );
-
   if (!product) {
     showToast("No se encontro el producto indicado.", "error");
     return;
   }
 
-  let quantity = Number(rawQuantity);
+  const quantity = round2(rawQuantity);
   if (!Number.isFinite(quantity) || quantity <= 0) {
     showToast("Ingresa una cantidad valida.", "error");
     return;
   }
 
-  if (product.unit === "unidad") {
-    quantity = Math.max(1, Math.round(quantity));
-  } else {
-    quantity = Number(quantity.toFixed(1));
-  }
-
-  const reserved = store.cart
-    .filter((item) => item.code === product.code)
-    .reduce((sum, item) => sum + item.quantity, 0);
-
-  if (reserved + quantity > product.stock) {
+  const reserved = state.cart
+    .filter((item) => String(item.code) === String(product.code))
+    .reduce((sum, item) => sum + Number(item.quantity), 0);
+  if (reserved + quantity > Number(product.stock)) {
     showToast("La cantidad supera el stock disponible.", "error");
     return;
   }
 
-  const existing = store.cart.find((item) => item.code === product.code);
+  const existing = state.cart.find((item) => String(item.code) === String(product.code));
   if (existing) {
-    existing.quantity += quantity;
+    existing.quantity = round2(existing.quantity + quantity);
   } else {
-    store.cart.push({
+    state.cart.push({
       code: product.code,
       name: product.name,
-      price: product.price,
-      quantity,
-      unit: product.unit
+      price: Number(product.price),
+      quantity: round2(quantity)
     });
   }
 
   byId("saleCode").value = "";
   byId("saleQty").value = "1";
-  saveStore();
+  saveCart();
   renderSales();
   showToast(`${product.name} agregado a la venta.`);
 }
 
 function clearSale() {
-  store.cart = [];
+  state.cart = [];
   byId("cashInput").value = "";
   byId("paymentMethod").value = "";
-  saveStore();
+  saveCart();
   renderSales();
 }
 
-function nextInvoiceId() {
-  const numbers = store.invoices.map((invoice) => Number(invoice.id.replace("FAC-", "")));
-  return `FAC-${Math.max(...numbers, 2040) + 1}`;
-}
-
-function pushMovement(product, quantityText, motive) {
-  const nextId = Math.max(...store.movements.map((movement) => movement.id), 0) + 1;
-  store.movements.unshift({
-    id: nextId,
-    productCode: product.code,
-    product: product.name,
-    quantity: quantityText,
-    date: TODAY,
-    motive
-  });
-}
-
-function checkout() {
-  if (!store.cart.length) {
+async function checkout() {
+  if (!state.cart.length) {
     showToast("Agrega productos antes de facturar.", "error");
     return;
   }
 
   const clientId = Number(byId("customerSelect").value);
-  const paymentMethod = byId("paymentMethod").value;
-  const client = getClient(clientId);
-  const total = getCartTotal();
-
-  if (!client || !paymentMethod) {
+  const payment = paymentName();
+  if (!clientId || !payment) {
     showToast("Selecciona cliente y metodo de pago.", "error");
     return;
   }
-
-  if (paymentMethod === "Credito" && !client.creditEnabled) {
-    showToast("Este cliente no tiene credito habilitado.", "error");
+  const client = getClient(clientId);
+  if (payment === "Credito" && client && !client.creditEnabled) {
+    showToast("Este cliente tiene el credito bloqueado.", "error");
     return;
   }
 
-  let received = total;
-  let change = 0;
-
-  if (paymentMethod === "Efectivo") {
-    received = Number(byId("cashInput").value || 0);
-    if (received < total) {
-      showToast("El valor recibido no cubre el total.", "error");
-      return;
+  const result = await api("/ventas", {
+    method: "POST",
+    body: {
+      clientId,
+      payment,
+      employeeId: state.session?.employeeId || 0,
+      received: payment === "Efectivo" ? Number(byId("cashInput").value || 0) : getCartTotal(),
+      items: state.cart.map((item) => ({
+        code: item.code,
+        quantity: item.quantity
+      }))
     }
-    change = received - total;
-  }
-
-  store.cart.forEach((item) => {
-    const product = getProduct(item.code);
-    product.stock -= item.quantity;
-    pushMovement(product, `-${formatNumber(item.quantity, item.unit)}`, "Salida por venta");
   });
 
-  if (paymentMethod === "Credito") {
-    client.debt += total;
-  }
-
-  const newInvoice = {
-    id: nextInvoiceId(),
-    date: TODAY,
-    employee: store.operator,
-    clientId,
-    payment: paymentMethod,
-    received,
-    total,
-    change,
-    items: store.cart.map((item) => ({ ...item }))
-  };
-
-  store.invoices.unshift(newInvoice);
-  store.ui.selectedInvoiceId = newInvoice.id;
-  store.cart = [];
-  byId("cashInput").value = "";
-  byId("paymentMethod").value = "";
-
-  saveStore();
-  showToast(`Factura ${newInvoice.id} creada con exito.`);
-  window.setTimeout(() => redirectTo("facturas"), 350);
-}
-
-function createProductFromForm() {
-  const code = byId("productCode").value.trim();
-  const name = byId("productName").value.trim();
-  const category = byId("productCategory").value;
-  const price = Number(byId("productPrice").value);
-  const stock = Number(byId("productStock").value);
-  const unit = byId("productUnit").value;
-  const description = byId("productDescription").value.trim();
-  const hasStock = byId("productStock").value.trim() !== "";
-
-  if (!code || !name || !category || !description || !price || Number.isNaN(stock) || !hasStock) {
-    showToast("Completa todos los datos del producto.", "error");
-    return;
-  }
-
-  if (store.products.some((product) => product.code === code)) {
-    showToast("Ese codigo de barras ya existe.", "error");
-    return;
-  }
-
-  const product = {
-    code,
-    name,
-    category,
-    description,
-    price,
-    stock,
-    minStock: unit === "unidad" ? 10 : 6,
-    unit
-  };
-
-  store.products.unshift(product);
-  pushMovement(product, `+${formatNumber(stock, unit)}`, "Nuevo producto");
-
-  byId("productForm").reset();
-  byId("productUnit").value = "kg";
-  saveStore();
-  renderProducts();
-  showToast(`${name} fue agregado al catalogo.`);
-}
-
-function toggleSelectedClientCredit() {
-  const client = getClient(store.ui.selectedClientId);
-  if (!client) {
-    return;
-  }
-
-  client.creditEnabled = !client.creditEnabled;
-  saveStore();
-  renderClients();
-  showToast(
-    client.creditEnabled
-      ? `Credito habilitado para ${client.name}.`
-      : `Credito bloqueado para ${client.name}.`
-  );
-}
-
-function updateInventory() {
-  const product = getProduct(byId("inventoryProductSelect").value);
-  const mode = byId("inventoryMode").value;
-  const amount = Number(byId("inventoryAmount").value);
-
-  if (!product || !Number.isFinite(amount) || amount <= 0) {
-    showToast("Ingresa un movimiento valido.", "error");
-    return;
-  }
-
-  if (mode === "adjust") {
-    const previous = product.stock;
-    product.stock = amount;
-    const delta = amount - previous;
-    const sign = delta >= 0 ? "+" : "-";
-    pushMovement(product, `${sign}${formatNumber(Math.abs(delta), product.unit)}`, "Ajuste manual");
-  }
-
-  if (mode === "return") {
-    product.stock += amount;
-    pushMovement(product, `+${formatNumber(amount, product.unit)}`, "Devolucion");
-  }
-
-  if (mode === "ingress") {
-    product.stock += amount;
-    pushMovement(product, `+${formatNumber(amount, product.unit)}`, "Ingreso proveedor");
-  }
-
-  if (mode === "manualOut") {
-    if (amount > product.stock) {
-      showToast("La salida manual supera el stock actual.", "error");
-      return;
-    }
-
-    product.stock -= amount;
-    pushMovement(product, `-${formatNumber(amount, product.unit)}`, "Salida manual");
-  }
-
-  byId("inventoryAmount").value = "";
-  saveStore();
-  renderInventory();
-  showToast(`Inventario actualizado para ${product.name}.`);
-}
-
-function applyCreditPayment(settleFull = false) {
-  const client = getClient(Number(byId("creditClientSelect").value));
-  if (!client) {
-    showToast("Selecciona un cliente.", "error");
-    return;
-  }
-
-  const payment = settleFull ? client.debt : Number(byId("creditPayment").value);
-  if (!payment || payment <= 0) {
-    showToast("Ingresa un abono valido.", "error");
-    return;
-  }
-
-  client.debt = Math.max(0, client.debt - payment);
-  byId("creditPayment").value = "";
-  saveStore();
-  renderCredits();
-  showToast(`Saldo actualizado para ${client.name}.`);
-}
-
-function blockOverdueClients() {
-  store.clients
-    .filter((client) => client.debt >= 100000)
-    .forEach((client) => {
-      client.creditEnabled = false;
-    });
-
-  saveStore();
-  renderCredits();
-  showToast("Clientes morosos bloqueados para nuevo credito.");
-}
-
-function resetDemoState() {
-  const fresh = cloneDefaults();
-  store.operator = fresh.operator;
-  store.products = fresh.products;
-  store.clients = fresh.clients;
-  store.invoices = fresh.invoices;
-  store.movements = fresh.movements;
-  store.cart = fresh.cart;
-  store.ui = fresh.ui;
-  saveStore();
-}
-
-function initLoginPage() {
-  const loginForm = byId("loginForm");
-  const demoButton = byId("demoButton");
-  const resetButton = byId("resetDemoButton");
-
-  if (store.operator) {
-    byId("usernameInput").value = store.operator;
-  }
-
-  loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const user = byId("usernameInput").value.trim();
-    const pass = byId("passwordInput").value.trim();
-
-    if (!user || !pass) {
-      byId("loginError").textContent = "Escribe usuario y contrasena para continuar.";
-      return;
-    }
-
-    byId("loginError").textContent = "";
-    store.operator = user;
-    saveStore();
-    redirectTo("resumen");
-  });
-
-  demoButton.addEventListener("click", () => {
-    byId("usernameInput").value = "Andres Cruz";
-    byId("passwordInput").value = "1234";
-    loginForm.requestSubmit();
-  });
-
-  if (resetButton) {
-    resetButton.addEventListener("click", () => {
-      resetDemoState();
-      byId("usernameInput").value = "";
-      byId("passwordInput").value = "";
-      byId("loginError").textContent = "";
-      showToast("La demo fue reiniciada.");
-    });
-  }
+  state.cart = [];
+  saveCart();
+  showToast(`Factura FAC-${result.invoiceId} creada.`);
+  window.setTimeout(() => {
+    window.location.href = `./facturas.html?id=${result.invoiceId}`;
+  }, 450);
 }
 
 function attachSalesEvents() {
@@ -1270,8 +952,7 @@ function attachSalesEvents() {
   });
 
   byId("scaleButton").addEventListener("click", () => {
-    const randomWeight = (Math.random() * 3.7 + 0.6).toFixed(1);
-    byId("saleQty").value = randomWeight;
+    byId("saleQty").value = (Math.random() * 3.7 + 0.6).toFixed(2);
   });
 
   byId("productSuggestions").addEventListener("click", (event) => {
@@ -1279,7 +960,6 @@ function attachSalesEvents() {
     if (!button) {
       return;
     }
-
     byId("saleCode").value = button.dataset.codePick;
     byId("saleQty").value = "1";
   });
@@ -1289,20 +969,21 @@ function attachSalesEvents() {
     if (!button) {
       return;
     }
-
-    store.cart = store.cart.filter((item) => item.code !== button.dataset.removeCart);
-    saveStore();
+    state.cart = state.cart.filter((item) => String(item.code) !== String(button.dataset.removeCart));
+    saveCart();
     renderSales();
   });
 
-  byId("customerSelect").addEventListener("change", (event) => {
-    store.ui.selectedSaleClientId = Number(event.target.value);
-    saveStore();
+  byId("customerSelect").addEventListener("change", renderSales);
+  byId("paymentMethod").addEventListener("change", () => {
+    const client = getClient(Number(byId("customerSelect").value));
+    if (paymentName() === "Credito" && client && !client.creditEnabled) {
+      showToast("Este cliente no tiene credito habilitado.", "error");
+    }
+    renderSales();
   });
-
-  byId("paymentMethod").addEventListener("change", renderSales);
   byId("cashInput").addEventListener("input", renderSales);
-  byId("checkoutButton").addEventListener("click", checkout);
+  byId("checkoutButton").addEventListener("click", () => checkout().catch((error) => showToast(error.message, "error")));
   byId("cancelSaleButton").addEventListener("click", () => {
     clearSale();
     showToast("La venta actual fue cancelada.");
@@ -1312,9 +993,8 @@ function attachSalesEvents() {
 function attachProductsEvents() {
   byId("productForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    createProductFromForm();
+    createProductFromForm().catch((error) => showToast(error.message, "error"));
   });
-
   byId("productFilter").addEventListener("change", renderProducts);
 }
 
@@ -1325,100 +1005,183 @@ function attachClientsEvents() {
     if (!button) {
       return;
     }
-
-    store.ui.selectedClientId = Number(button.dataset.clientPick);
-    saveStore();
+    state.selectedClientId = Number(button.dataset.clientPick);
     renderClients();
   });
-  byId("toggleCreditButton").addEventListener("click", toggleSelectedClientCredit);
+  byId("toggleCreditButton").addEventListener("click", () => {
+    toggleSelectedClientCredit().catch((error) => showToast(error.message, "error"));
+  });
 }
 
 function attachInventoryEvents() {
   byId("inventoryProductSelect").addEventListener("change", renderInventory);
   byId("inventoryForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    updateInventory();
+    updateInventory().catch((error) => showToast(error.message, "error"));
   });
 }
 
 function attachCreditsEvents() {
-  byId("applyCreditButton").addEventListener("click", () => applyCreditPayment(false));
-  byId("settleCreditButton").addEventListener("click", () => applyCreditPayment(true));
-  byId("blockOverdueButton").addEventListener("click", blockOverdueClients);
+  byId("creditClientSelect").addEventListener("change", (event) => {
+    state.selectedCreditId = Number(event.target.value || 0);
+    renderCredits();
+  });
+  byId("creditsTable").addEventListener("click", (event) => {
+    const row = event.target.closest("[data-credit-pick]");
+    if (!row) {
+      return;
+    }
+    state.selectedCreditId = Number(row.dataset.creditPick);
+    renderCredits();
+  });
+  byId("applyCreditButton").addEventListener("click", () => {
+    applyCreditPayment(false).catch((error) => showToast(error.message, "error"));
+  });
+  byId("settleCreditButton").addEventListener("click", () => {
+    applyCreditPayment(true).catch((error) => showToast(error.message, "error"));
+  });
+  byId("blockOverdueButton").addEventListener("click", () => {
+    blockOverdueClients().catch((error) => showToast(error.message, "error"));
+  });
 }
 
 function attachInvoicesEvents() {
-  byId("invoiceMonth").addEventListener("change", renderInvoices);
-  byId("invoiceYear").addEventListener("change", renderInvoices);
-  byId("invoiceSearch").addEventListener("input", renderInvoices);
+  const params = new URLSearchParams(window.location.search);
+  state.selectedInvoiceId = Number(params.get("id") || 0);
+
+  byId("invoiceMonth").addEventListener("change", () => {
+    state.selectedInvoiceId = 0;
+    loadInvoices().catch((error) => showToast(error.message, "error"));
+  });
+  byId("invoiceYear").addEventListener("change", () => {
+    state.selectedInvoiceId = 0;
+    loadInvoices().catch((error) => showToast(error.message, "error"));
+  });
+  byId("invoiceSearch").addEventListener("input", () => {
+    state.selectedInvoiceId = 0;
+    loadInvoices().catch((error) => showToast(error.message, "error"));
+  });
   byId("invoicesTable").addEventListener("click", (event) => {
     const row = event.target.closest("[data-invoice-pick]");
     if (!row) {
       return;
     }
-
-    store.ui.selectedInvoiceId = row.dataset.invoicePick;
-    saveStore();
-    renderInvoices();
+    state.selectedInvoiceId = Number(row.dataset.invoicePick);
+    loadInvoices().catch((error) => showToast(error.message, "error"));
   });
 }
 
 function attachCutsEvents() {
-  byId("cutMonth").addEventListener("change", renderCuts);
-  byId("cutYear").addEventListener("change", renderCuts);
+  byId("cutMonth").addEventListener("change", () => loadCuts().catch((error) => showToast(error.message, "error")));
+  byId("cutYear").addEventListener("change", () => loadCuts().catch((error) => showToast(error.message, "error")));
 }
 
-function initWorkspace() {
+function initLoginPage() {
+  const loginForm = byId("loginForm");
+  const demoButton = byId("demoButton");
+  const resetButton = byId("resetDemoButton");
+
+  if (state.session) {
+    byId("usernameInput").value = state.session.name || "";
+  }
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      const user = byId("usernameInput").value.trim();
+      const pass = byId("passwordInput").value.trim();
+      const result = await api("/login", {
+        method: "POST",
+        body: {
+          username: user,
+          password: pass
+        }
+      });
+      saveSession({
+        employeeId: result.employeeId,
+        name: result.name,
+        role: result.role
+      });
+      byId("loginError").textContent = "";
+      redirectTo("resumen");
+    } catch (error) {
+      byId("loginError").textContent = error.message;
+    }
+  });
+
+  demoButton.addEventListener("click", () => {
+    byId("usernameInput").value = "PENE";
+    byId("passwordInput").value = "1234";
+    loginForm.requestSubmit();
+  });
+
+  resetButton.addEventListener("click", () => {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(CART_KEY);
+    state.session = null;
+    state.cart = [];
+    byId("usernameInput").value = "";
+    byId("passwordInput").value = "";
+    byId("loginError").textContent = "";
+    showToast("Sesion local reiniciada.");
+  });
+}
+
+async function initWorkspace() {
   ensureSession();
   syncShell();
 
   if (page === "resumen") {
-    renderOverview();
+    await loadOverview();
   }
 
   if (page === "ventas") {
-    renderSales();
     attachSalesEvents();
+    await loadSales();
   }
 
   if (page === "productos") {
-    renderProducts();
     attachProductsEvents();
+    await loadProducts();
   }
 
   if (page === "clientes") {
-    renderClients();
     attachClientsEvents();
+    await loadClients();
   }
 
   if (page === "inventario") {
-    renderInventory();
     attachInventoryEvents();
+    await loadInventory();
   }
 
   if (page === "credito") {
-    renderCredits();
     attachCreditsEvents();
+    await loadCredits();
   }
 
   if (page === "facturas") {
-    renderInvoices();
     attachInvoicesEvents();
+    await loadInvoices();
   }
 
   if (page === "cortes") {
-    renderCuts();
     attachCutsEvents();
+    await loadCuts();
   }
 }
 
-function init() {
+async function init() {
   if (page === "login") {
     initLoginPage();
     return;
   }
 
-  initWorkspace();
+  try {
+    await initWorkspace();
+  } catch (error) {
+    showToast(error.message, "error");
+  }
 }
 
 init();

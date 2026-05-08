@@ -283,6 +283,12 @@ button {
   transform: translateY(-2px);
 }
 
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
 .full {
   width: 100%;
   justify-content: center;
@@ -531,6 +537,10 @@ button {
   grid-template-columns: 0.86fr 1.14fr;
 }
 
+.full-span {
+  grid-column: 1 / -1;
+}
+
 .sales-grid {
   grid-template-columns: 1.45fr 0.8fr;
 }
@@ -645,11 +655,22 @@ button {
   border: 1px solid rgba(91, 64, 48, 0.08);
 }
 
+.scroll-table {
+  max-height: 360px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
   background: rgba(255, 255, 255, 0.62);
+}
+
+.scroll-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8efe6;
 }
 
 thead {

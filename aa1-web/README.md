@@ -41,15 +41,30 @@ Reconstruccion visual del proyecto Java Swing `AA1` en una version web hecha con
 - Paneles mas claros y legibles
 - Flujo de venta mas directo
 
-## Como abrirlo
+## Como abrirlo con Oracle
 
-1. Abre `index.html` en el navegador.
-2. Usa cualquier usuario y contrasena o presiona `Cargar demo`.
-3. Entra al sistema y navega entre los modulos desde la barra lateral.
+1. Confirma que la base Oracle tenga cargado `baseDatosCreacion_oracle (1).sql`.
+2. Desde PowerShell, entra a esta carpeta y ejecuta:
+
+```powershell
+.\run-server.ps1
+```
+
+3. Abre `http://localhost:8081/`.
+4. Puedes entrar con `PENE` / `1234` o con el empleado de la base `Andres` / `123`.
 
 ## Nota tecnica
 
-La demo usa `localStorage` para mantener sincronizados los datos entre paginas.
-Eso permite que una venta hecha en `ventas.html` aparezca luego en `facturas.html` o que un ajuste de inventario se vea en `inventario.html` y `resumen.html`.
+La web ahora usa un backend Java/JDBC:
 
-Si luego quieres, el siguiente paso puede ser conectar esta interfaz con la logica Java y la base de datos real.
+- `backend/Conexion.java`: conexion Oracle (`PENE` / `1234`, servicio `freepdb1`).
+- `backend/Login.java`, `Resumen.java`, `Ventas.java`, `Productos.java`, `Clientes.java`, `Inventario.java`, `Credito.java`, `Facturas.java`, `Cortes.java`: un endpoint por ventana HTML.
+- `app.js`: consume `/api/*` y deja `localStorage` solo para la sesion local y el carrito temporal.
+
+Puedes cambiar la conexion sin editar codigo usando variables de entorno:
+
+```powershell
+$env:GESTIONDB_DB_URL="jdbc:oracle:thin:@//localhost:1521/freepdb1"
+$env:GESTIONDB_DB_USER="PENE"
+$env:GESTIONDB_DB_PASSWORD="1234"
+```

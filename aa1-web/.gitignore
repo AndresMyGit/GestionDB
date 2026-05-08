@@ -1,0 +1,4 @@
+server-out/
+*.class
+server.log
+server.err.log

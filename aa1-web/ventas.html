@@ -90,11 +90,11 @@
               <form class="inline-form" id="salesForm">
                 <label class="field grow">
                   <span>Codigo o nombre</span>
-                  <input id="saleCode" type="text" placeholder="770101 o lomo fino">
+                  <input id="saleCode" type="text" placeholder="2002 o sudar">
                 </label>
                 <label class="field short">
                   <span>Cantidad</span>
-                  <input id="saleQty" type="number" min="0.1" step="0.1" value="1">
+                  <input id="saleQty" type="number" min="0.01" step="0.01" value="1">
                 </label>
                 <button class="primary-button" type="submit">Agregar producto</button>
               </form>
@@ -153,7 +153,7 @@
 
               <label class="field hidden" id="cashWrap">
                 <span>Paga con</span>
-                <input id="cashInput" type="number" min="0" step="1000" placeholder="100000">
+                <input id="cashInput" type="number" min="0" step="0.01" placeholder="100000.00">
               </label>
 
               <div class="totals-box">

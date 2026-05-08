@@ -116,7 +116,7 @@
 
               <label class="field">
                 <span>Total a abonar</span>
-                <input id="creditPayment" type="number" min="0" step="1000" placeholder="50000">
+                <input id="creditPayment" type="number" min="0" step="0.01" placeholder="50.00">
               </label>
 
               <div class="button-row">
@@ -125,6 +125,31 @@
               </div>
 
               <button class="ghost-button full" type="button" id="blockOverdueButton">Bloquear clientes morosos</button>
+            </article>
+
+            <article class="panel full-span">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Historial</p>
+                  <h3>Abonos por cliente</h3>
+                </div>
+                <span class="badge-soft" id="creditHistoryCount">0 movimientos</span>
+              </div>
+
+              <div class="table-wrap scroll-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Cliente</th>
+                      <th>Documento</th>
+                      <th>Factura</th>
+                      <th>Abono</th>
+                    </tr>
+                  </thead>
+                  <tbody id="creditHistoryTable"></tbody>
+                </table>
+              </div>
             </article>
           </div>
         </section>

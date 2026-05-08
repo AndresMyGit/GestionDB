@@ -10,12 +10,18 @@
   <div class="page-shell">
     <section class="login-screen">
       <div class="login-hero reveal">
-        <p class="eyebrow">Punto de venta</p>
-        <h1>Carniceria Santa Cruz</h1>
-        <p class="hero-copy">
-          Controla ventas, caja, catalogo, inventario y credito desde una interfaz pensada
-          para el ritmo diario de una carniceria.
-        </p>
+        <div class="login-brand-lockup">
+          <div class="brand-year">
+            <span>Desde</span>
+            <strong>1990</strong>
+          </div>
+          <div class="cleaver-mark" aria-hidden="true"></div>
+          <p class="eyebrow">Carne fresca</p>
+          <h1>Carniceria Santa Cruz</h1>
+          <h2>La tradicion</h2>
+          <p class="hero-copy">Calidad que se siente en cada corte.</p>
+        </div>
+
         <div class="hero-pills">
           <span>Caja rapida</span>
           <span>Stock por corte</span>
@@ -26,41 +32,43 @@
 
       <form class="login-card reveal delay-1" id="loginForm">
         <div class="card-top">
-          <p class="eyebrow">Acceso del operador</p>
-          <h2>Iniciar turno</h2>
+          <div class="login-card-icon" aria-hidden="true"></div>
+          <h2>Bienvenido</h2>
           <p>
-            Entra al tablero de trabajo para registrar ventas, consultar facturas y mantener
-            el mostrador al dia.
+            Inicia sesion para acceder al sistema de tu carniceria.
           </p>
         </div>
 
-        <label class="field">
+        <label class="field login-field user-field">
           <span>Usuario</span>
           <input id="usernameInput" type="text" placeholder="Operador de caja">
         </label>
 
-        <label class="field">
+        <label class="field login-field pass-field">
           <span>Contrasena</span>
           <input id="passwordInput" type="password" placeholder="1234">
         </label>
 
+        <div class="login-options">
+          <label>
+            <input type="checkbox" checked>
+            <span>Recordarme</span>
+          </label>
+          <a href="./index.html">Olvidaste tu contrasena?</a>
+        </div>
+
         <p class="login-error" id="loginError"></p>
 
         <div class="card-actions">
-          <button class="primary-button" type="submit">Ingresar</button>
-          <button class="ghost-button" type="button" id="demoButton">Cargar demo</button>
-          <button class="ghost-button" type="button" id="resetDemoButton">Reiniciar demo</button>
+          <button class="primary-button" type="submit">Iniciar sesion</button>
+          <div class="login-divider"><span>o continua con</span></div>
+          <button class="ghost-button" type="button" id="demoButton">Modo invitado</button>
+          <button class="ghost-button" type="button" id="resetDemoButton">Limpiar acceso</button>
         </div>
 
         <div class="login-notes">
-          <div>
-            <strong>Base:</strong>
-            <span>Carniceria Santa Cruz</span>
-          </div>
-          <div>
-            <strong>Salida:</strong>
-            <span>Ventas, inventario y credito</span>
-          </div>
+          <div class="login-mini-icon" aria-hidden="true"></div>
+          <p>Gracias por elegir calidad,<br><strong>gracias por elegirnos.</strong></p>
         </div>
       </form>
     </section>

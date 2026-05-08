@@ -329,6 +329,33 @@ button {
   transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
+.primary-button::before,
+.ghost-button::before,
+.remove-button::before,
+.chip-row button::before {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-right: 8px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.primary-button::before {
+  content: "+";
+}
+
+.ghost-button::before {
+  content: ">";
+}
+
+.remove-button::before {
+  content: "x";
+}
+
 .primary-button {
   background: linear-gradient(180deg, #c72c21, var(--accent-dark));
   color: #fffaf5;
@@ -733,12 +760,73 @@ input:disabled {
 }
 
 .chip-row button {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid rgba(180, 35, 24, 0.2);
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-dark);
   padding: 8px 12px;
   font-weight: 800;
+}
+
+.chip-row button::before {
+  content: "+";
+  margin-right: 6px;
+}
+
+#demoButton::before,
+#resetDemoButton::before {
+  content: "↻";
+}
+
+#loginForm .primary-button::before {
+  content: ">";
+}
+
+#scaleButton::before {
+  content: "kg";
+  font-size: 0.72rem;
+}
+
+#cancelSaleButton::before {
+  content: "x";
+}
+
+#checkoutButton::before {
+  content: "$";
+}
+
+#applyCreditButton::before {
+  content: "$";
+}
+
+#settleCreditButton::before {
+  content: "=";
+}
+
+#blockOverdueButton::before {
+  content: "!";
+}
+
+#toggleCreditButton::before {
+  content: "⇄";
+}
+
+#inventoryForm .primary-button::before {
+  content: "⇅";
+}
+
+a.primary-button[href*="ventas"]::before {
+  content: "$";
+}
+
+a.ghost-button[href*="productos"]::before {
+  content: "▦";
+}
+
+a.ghost-button[href*="index"]::before {
+  content: "<";
 }
 
 .table-wrap {
@@ -862,14 +950,39 @@ tbody tr:hover {
 }
 
 .client-item {
+  position: relative;
   width: 100%;
+  min-height: 58px;
   text-align: left;
   background: #fff;
+  padding-left: 48px;
+}
+
+.client-item::before {
+  content: "CL";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-steel);
+  color: var(--steel);
+  font-size: 0.68rem;
+  font-weight: 900;
+  transform: translateY(-50%);
 }
 
 .client-item.active {
   border-color: rgba(180, 35, 24, 0.55);
   background: var(--accent-soft);
+}
+
+.client-item.active::before {
+  background: var(--accent);
+  color: #fffaf5;
 }
 
 .detail-grid {

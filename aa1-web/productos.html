@@ -14,7 +14,7 @@
           <p class="eyebrow">Sistema comercial</p>
           <h2>Santa Cruz</h2>
           <p class="side-copy">
-            Gestion del catalogo con mejor lectura y un alta de productos mas limpia.
+            Catalogo de cortes, precios y existencias listo para el trabajo de caja.
           </p>
         </div>
 
@@ -30,14 +30,14 @@
         </nav>
 
         <div class="side-pattern"></div>
-        <p class="side-foot">Modulo separado a partir de la ventana `Productos.java`.</p>
+        <p class="side-foot">Alta y consulta de productos del mostrador.</p>
         <a class="ghost-button full side-button" href="./index.html">Volver al login</a>
       </aside>
 
       <main class="workspace">
         <header class="workspace-header">
           <div>
-            <p class="eyebrow">Panel principal</p>
+              <p class="eyebrow">Catalogo de tienda</p>
             <h1 id="currentSection">Productos</h1>
           </div>
 
@@ -59,7 +59,7 @@
               <p class="eyebrow">Catalogo</p>
               <h2>Productos</h2>
             </div>
-            <span class="badge-soft">Nuevo + Actualizar + Catalogo</span>
+            <span class="badge-soft">Cortes + precios + stock</span>
           </div>
 
           <div class="stats-grid compact reveal delay-1">
@@ -81,14 +81,14 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Nuevo producto</p>
-                  <h3>Alta de catalogo</h3>
+                  <p class="eyebrow">Nuevo registro</p>
+                  <h3>Agregar producto al mostrador</h3>
                 </div>
               </div>
 
               <form class="form-grid" id="productForm">
                 <label class="field">
-                  <span>Codigo de barras</span>
+                  <span>Codigo de producto</span>
                   <input id="productCode" type="text" placeholder="20999">
                 </label>
                 <label class="field">
@@ -124,7 +124,7 @@
                 </label>
                 <label class="field full-row">
                   <span>Descripcion</span>
-                  <textarea id="productDescription" rows="4" placeholder="Describe el corte o la presentacion"></textarea>
+                  <textarea id="productDescription" rows="4" placeholder="Describe el corte, empaque o presentacion"></textarea>
                 </label>
                 <button class="primary-button" type="submit">Agregar producto</button>
               </form>
@@ -133,7 +133,7 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Lista de productos</p>
+                  <p class="eyebrow">Inventario comercial</p>
                   <h3>Catalogo activo</h3>
                 </div>
                 <label class="filter-inline">

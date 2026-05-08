@@ -435,11 +435,9 @@ body[data-page="login"] .login-hero {
   border: 0;
   border-radius: 0 28px 28px 0;
   background:
-    linear-gradient(180deg, rgba(10, 8, 7, 0.2), rgba(8, 6, 5, 0.72)),
-    radial-gradient(circle at 34% 74%, rgba(202, 42, 32, 0.9) 0 8%, transparent 21%),
-    radial-gradient(circle at 56% 73%, rgba(145, 21, 16, 0.98) 0 10%, transparent 24%),
-    radial-gradient(circle at 78% 70%, rgba(216, 82, 68, 0.72) 0 7%, transparent 18%),
-    linear-gradient(90deg, rgba(57, 30, 14, 0.98), rgba(15, 9, 7, 0.98));
+    linear-gradient(180deg, rgba(8, 6, 5, 0.22), rgba(8, 6, 5, 0.74)),
+    linear-gradient(90deg, rgba(8, 6, 5, 0.82), rgba(8, 6, 5, 0.22) 48%, rgba(8, 6, 5, 0.38)),
+    url("./assets/ChatGPT Image 8 may 2026, 17_57_57.png") center/cover no-repeat;
   padding: clamp(30px, 5vw, 58px);
   box-shadow: 0 28px 70px rgba(38, 24, 16, 0.24);
 }
@@ -450,37 +448,38 @@ body[data-page="login"] .login-hero::before {
   inset: 0;
   z-index: -2;
   background:
-    repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 44px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 34%, rgba(0, 0, 0, 0.22)),
-    repeating-linear-gradient(8deg, rgba(255, 194, 128, 0.045) 0 2px, transparent 2px 18px);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 44%, rgba(0, 0, 0, 0.28)),
+    repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 44px);
   mix-blend-mode: screen;
 }
 
 body[data-page="login"] .login-hero::after {
-  right: auto;
-  left: clamp(36px, 7vw, 92px);
-  bottom: clamp(46px, 9vw, 96px);
+  content: "";
+  right: 0;
+  left: 0;
+  bottom: 0;
   z-index: -1;
-  width: min(62vw, 620px);
-  height: min(28vw, 280px);
+  width: auto;
+  height: 45%;
   aspect-ratio: auto;
   border: 0;
-  border-radius: 22px;
-  background:
-    radial-gradient(ellipse at 24% 52%, #c8241c 0 26%, #f0b1a4 27% 31%, #9d1712 32% 50%, transparent 52%),
-    radial-gradient(ellipse at 58% 54%, #a81713 0 24%, #f1aaa0 25% 30%, #7f120f 31% 47%, transparent 49%),
-    radial-gradient(ellipse at 82% 50%, #d34b3d 0 22%, #f5c0b6 23% 31%, #941611 32% 46%, transparent 48%),
-    linear-gradient(13deg, #5b351d, #24130c);
-  box-shadow: 0 34px 54px rgba(0, 0, 0, 0.45);
-  opacity: 0.96;
-  transform: rotate(-4deg);
+  border-radius: 0;
+  background: linear-gradient(180deg, transparent, rgba(7, 5, 4, 0.72));
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
 }
 
 body[data-page="login"] .login-brand-lockup {
   position: relative;
   z-index: 2;
-  max-width: 620px;
+  max-width: 660px;
   text-align: center;
+  padding: clamp(20px, 3vw, 34px);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(10, 7, 5, 0.56), rgba(10, 7, 5, 0.28));
+  backdrop-filter: blur(2px);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.62);
 }
 
 body[data-page="login"] .brand-year {
@@ -603,7 +602,7 @@ body[data-page="login"] .hero-pills {
   align-self: end;
   justify-content: center;
   max-width: 640px;
-  margin-top: 210px;
+  margin-top: clamp(160px, 26vh, 260px);
 }
 
 body[data-page="login"] .login-hero .hero-pills span {

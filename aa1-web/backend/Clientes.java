@@ -3,6 +3,9 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +69,21 @@ public class Clientes implements HttpHandler {
 
     private void post(HttpExchange exchange) throws Exception {
         Map<String, Object> body = Api.readJsonObject(exchange);
+        String action = Api.str(body, "action");
+        if (action.isBlank()) {
+            action = body.containsKey("name") || body.containsKey("document") ? "create" : "toggleCredit";
+        }
+
+        try (Connection connection = Conexion.getConnection()) {
+            if ("create".equalsIgnoreCase(action)) {
+                createClient(exchange, connection, body);
+                return;
+            }
+            toggleCredit(exchange, connection, body);
+        }
+    }
+
+    private void toggleCredit(HttpExchange exchange, Connection connection, Map<String, Object> body) throws Exception {
         int clientId = Api.integer(body, "clientId", 0);
         boolean enabled = Boolean.TRUE.equals(body.get("enabled"));
         if (clientId <= 0) {
@@ -73,9 +91,8 @@ public class Clientes implements HttpHandler {
             return;
         }
 
-        try (Connection connection = Conexion.getConnection();
-                PreparedStatement statement = connection.prepareStatement(
-                        "UPDATE cliente SET estadocredito = ? WHERE id = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE cliente SET estadocredito = ? WHERE id = ?")) {
             statement.setInt(1, enabled ? 1 : 0);
             statement.setInt(2, clientId);
             int updated = statement.executeUpdate();
@@ -87,6 +104,103 @@ public class Clientes implements HttpHandler {
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("message", enabled ? "Credito habilitado" : "Credito bloqueado");
             Api.ok(exchange, response);
+        }
+    }
+
+    private void createClient(HttpExchange exchange, Connection connection, Map<String, Object> body) throws Exception {
+        String name = Api.str(body, "name").trim();
+        String document = Api.str(body, "document").trim();
+        String phone = Api.str(body, "phone").trim();
+        String address = Api.str(body, "address").trim();
+        boolean creditEnabled = Boolean.TRUE.equals(body.get("creditEnabled"));
+
+        if (name.isBlank() || document.isBlank()) {
+            Api.error(exchange, 400, "Nombre y documento son obligatorios");
+            return;
+        }
+
+        connection.setAutoCommit(false);
+        try {
+            if (documentExists(connection, document)) {
+                connection.rollback();
+                Api.error(exchange, 400, "Ya existe un cliente con ese documento");
+                return;
+            }
+
+            int clientId = nextClientId(connection);
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO persona (id, nombre, documento, telefono) VALUES (?, ?, ?, ?)")) {
+                statement.setInt(1, clientId);
+                statement.setString(2, name);
+                statement.setString(3, document);
+                if (phone.isBlank()) {
+                    statement.setNull(4, java.sql.Types.VARCHAR);
+                } else {
+                    statement.setString(4, phone);
+                }
+                statement.executeUpdate();
+            }
+
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO cliente (id, direccion, estadocredito) VALUES (?, ?, ?)")) {
+                statement.setInt(1, clientId);
+                if (address.isBlank()) {
+                    statement.setNull(2, java.sql.Types.VARCHAR);
+                } else {
+                    statement.setString(2, address);
+                }
+                statement.setInt(3, creditEnabled ? 1 : 0);
+                statement.executeUpdate();
+            }
+
+            connection.commit();
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Cliente creado");
+            response.put("clientId", clientId);
+            response.put("name", name);
+            response.put("document", document);
+            Api.ok(exchange, response);
+        } catch (Exception exception) {
+            connection.rollback();
+            throw exception;
+        }
+    }
+
+    private boolean documentExists(Connection connection, String document) throws Exception {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT COUNT(*) FROM persona WHERE documento = ?")) {
+            statement.setString(1, document);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() && resultSet.getInt(1) > 0;
+            }
+        }
+    }
+
+    private int nextClientId(Connection connection) throws Exception {
+        String[] sequences = {
+                "persona_id_seq",
+                "persona_seq",
+                "persona_idpersona_seq",
+                "cliente_id_seq",
+                "cliente_seq"
+        };
+
+        for (String sequence : sequences) {
+            try {
+                return nextValue(connection, sequence);
+            } catch (SQLException ignored) {
+                // Usa la primera secuencia existente; si no hay, cae al calculo por maximo.
+            }
+        }
+
+        return Api.scalarInt(connection, "SELECT NVL(MAX(id), 0) + 1 FROM persona");
+    }
+
+    private int nextValue(Connection connection, String sequence) throws Exception {
+        try (Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery("SELECT " + sequence + ".NEXTVAL FROM dual")) {
+            resultSet.next();
+            return resultSet.getInt(1);
         }
     }
 }

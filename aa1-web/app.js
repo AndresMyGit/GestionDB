@@ -388,6 +388,16 @@ async function loadClients() {
   renderClients();
 }
 
+async function createClient(payload) {
+  return api("/clientes", {
+    method: "POST",
+    body: {
+      action: "create",
+      ...payload
+    }
+  });
+}
+
 async function toggleSelectedClientCredit() {
   const client = getClient(state.selectedClientId);
   if (!client) {
@@ -397,6 +407,7 @@ async function toggleSelectedClientCredit() {
   const result = await api("/clientes", {
     method: "POST",
     body: {
+      action: "toggleCredit",
       clientId: client.id,
       enabled: !client.creditEnabled
     }
@@ -764,15 +775,26 @@ async function loadCuts() {
 
 function fillSalesSelects() {
   const clientSelect = byId("customerSelect");
-  const currentClient = clientSelect.value || String(state.clients[0]?.id || "");
-  clientSelect.innerHTML = state.clients
-    .map(
-      (client) => `<option value="${client.id}">${escapeHtml(client.name)} - ${escapeHtml(client.document)}</option>`
-    )
-    .join("");
-  clientSelect.value = state.clients.some((client) => String(client.id) === String(currentClient))
-    ? currentClient
-    : String(state.clients[0]?.id || "");
+  if (!clientSelect) {
+    return;
+  }
+
+  if (!state.clients.length) {
+    clientSelect.innerHTML = '<option value="">Sin clientes registrados</option>';
+    clientSelect.value = "";
+    clientSelect.disabled = true;
+  } else {
+    const currentClient = clientSelect.value || String(state.clients[0]?.id || "");
+    clientSelect.disabled = false;
+    clientSelect.innerHTML = state.clients
+      .map(
+        (client) => `<option value="${client.id}">${escapeHtml(client.name)} - ${escapeHtml(client.document)}</option>`
+      )
+      .join("");
+    clientSelect.value = state.clients.some((client) => String(client.id) === String(currentClient))
+      ? currentClient
+      : String(state.clients[0]?.id || "");
+  }
 
   const methodSelect = byId("paymentMethod");
   const currentMethod = methodSelect.value;
@@ -945,6 +967,55 @@ async function checkout() {
   }, 450);
 }
 
+function resetQuickClientForm() {
+  const form = byId("quickClientForm");
+  if (!form) {
+    return;
+  }
+  form.reset();
+}
+
+function toggleQuickClientForm(forceOpen) {
+  const form = byId("quickClientForm");
+  const button = byId("toggleQuickClientButton");
+  if (!form || !button) {
+    return;
+  }
+
+  const open = typeof forceOpen === "boolean" ? forceOpen : form.classList.contains("hidden");
+  form.classList.toggle("hidden", !open);
+  button.textContent = open ? "Ocultar formulario de cliente" : "Agregar nuevo cliente";
+
+  if (!open) {
+    resetQuickClientForm();
+    return;
+  }
+
+  byId("quickClientName").focus();
+}
+
+async function createClientFromQuickForm() {
+  const payload = {
+    name: byId("quickClientName").value.trim(),
+    document: byId("quickClientDocument").value.trim(),
+    phone: byId("quickClientPhone").value.trim(),
+    address: byId("quickClientAddress").value.trim(),
+    creditEnabled: byId("quickClientCredit").checked
+  };
+
+  if (!payload.name || !payload.document) {
+    showToast("Completa nombre y documento del cliente.", "error");
+    return;
+  }
+
+  const result = await createClient(payload);
+  await loadSales();
+  byId("customerSelect").value = String(result.clientId);
+  renderSales();
+  toggleQuickClientForm(false);
+  showToast(result.message || "Cliente guardado.");
+}
+
 function attachSalesEvents() {
   byId("salesForm").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -983,6 +1054,12 @@ function attachSalesEvents() {
     renderSales();
   });
   byId("cashInput").addEventListener("input", renderSales);
+  byId("toggleQuickClientButton").addEventListener("click", () => toggleQuickClientForm());
+  byId("quickClientForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    createClientFromQuickForm().catch((error) => showToast(error.message, "error"));
+  });
+  byId("cancelQuickClientButton").addEventListener("click", () => toggleQuickClientForm(false));
   byId("checkoutButton").addEventListener("click", () => checkout().catch((error) => showToast(error.message, "error")));
   byId("cancelSaleButton").addEventListener("click", () => {
     clearSale();
@@ -1078,8 +1155,6 @@ function attachCutsEvents() {
 
 function initLoginPage() {
   const loginForm = byId("loginForm");
-  const demoButton = byId("demoButton");
-  const resetButton = byId("resetDemoButton");
 
   if (state.session) {
     byId("usernameInput").value = state.session.name || "";
@@ -1107,23 +1182,6 @@ function initLoginPage() {
     } catch (error) {
       byId("loginError").textContent = error.message;
     }
-  });
-
-  demoButton.addEventListener("click", () => {
-    byId("usernameInput").value = "PENE";
-    byId("passwordInput").value = "1234";
-    loginForm.requestSubmit();
-  });
-
-  resetButton.addEventListener("click", () => {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(CART_KEY);
-    state.session = null;
-    state.cart = [];
-    byId("usernameInput").value = "";
-    byId("passwordInput").value = "";
-    byId("loginError").textContent = "";
-    showToast("Sesion local reiniciada.");
   });
 }
 

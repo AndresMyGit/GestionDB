@@ -51,13 +51,13 @@ Reconstruccion visual del proyecto Java Swing `AA1` en una version web hecha con
 ```
 
 3. Abre `http://localhost:8081/`.
-4. Puedes entrar con `PENE` / `1234` o con el empleado de la base `Andres` / `123`.
+4. Inicia sesion con un empleado registrado en la base de datos.
 
 ## Nota tecnica
 
 La web ahora usa un backend Java/JDBC:
 
-- `backend/Conexion.java`: conexion Oracle (`PENE` / `1234`, servicio `freepdb1`).
+- `backend/Conexion.java`: conexion Oracle configurable por entorno (servicio `freepdb1` por defecto).
 - `backend/Login.java`, `Resumen.java`, `Ventas.java`, `Productos.java`, `Clientes.java`, `Inventario.java`, `Credito.java`, `Facturas.java`, `Cortes.java`: un endpoint por ventana HTML.
 - `app.js`: consume `/api/*` y deja `localStorage` solo para la sesion local y el carrito temporal.
 
@@ -65,6 +65,6 @@ Puedes cambiar la conexion sin editar codigo usando variables de entorno:
 
 ```powershell
 $env:GESTIONDB_DB_URL="jdbc:oracle:thin:@//localhost:1521/freepdb1"
-$env:GESTIONDB_DB_USER="PENE"
-$env:GESTIONDB_DB_PASSWORD="1234"
+$env:GESTIONDB_DB_USER="TU_USUARIO_ORACLE"
+$env:GESTIONDB_DB_PASSWORD="TU_PASSWORD_ORACLE"
 ```

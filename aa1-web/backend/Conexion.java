@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 public final class Conexion {
     private static final String DEFAULT_URL = "jdbc:oracle:thin:@//localhost:1521/freepdb1";
-    private static final String DEFAULT_USER = "PENE";
+    private static final String DEFAULT_USER = "ANDRES";
     private static final String DEFAULT_PASSWORD = "1234";
 
     private Conexion() {

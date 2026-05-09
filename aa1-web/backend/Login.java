@@ -49,13 +49,6 @@ public class Login implements HttpHandler {
                             return row;
                         });
 
-                if (employee == null && username.equalsIgnoreCase(Conexion.user()) && password.equals(Conexion.password())) {
-                    employee = new LinkedHashMap<>();
-                    employee.put("employeeId", 1);
-                    employee.put("name", Conexion.user());
-                    employee.put("role", "conexion");
-                }
-
                 if (employee == null) {
                     Api.error(exchange, 401, "Credenciales invalidas");
                     return;

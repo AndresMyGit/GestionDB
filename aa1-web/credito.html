@@ -136,6 +136,22 @@
                 <span class="badge-soft" id="creditHistoryCount">0 movimientos</span>
               </div>
 
+              <div class="filters-bar compact-filters">
+                <label class="field short">
+                  <span>Ver abonos</span>
+                  <select id="creditHistoryMode">
+                    <option value="credit">Credito seleccionado</option>
+                    <option value="client">Cliente seleccionado</option>
+                    <option value="all">Todos</option>
+                  </select>
+                </label>
+
+                <label class="field grow">
+                  <span>Buscar</span>
+                  <input id="creditPaymentSearch" type="text" placeholder="Cliente, documento, FAC o credito">
+                </label>
+              </div>
+
               <div class="table-wrap scroll-table">
                 <table>
                   <thead>

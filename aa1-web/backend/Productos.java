@@ -3,6 +3,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -109,15 +110,35 @@ public class Productos implements HttpHandler {
     }
 
     private String updateProduct(Connection connection, Map<String, Object> body) throws Exception {
-        try (CallableStatement statement = connection.prepareCall("{ ? = call actualizar_producto(?, ?, ?, ?, ?) }")) {
-            statement.registerOutParameter(1, Types.VARCHAR);
-            statement.setInt(2, Api.integer(body, "code", 0));
-            statement.setString(3, Api.str(body, "name"));
-            statement.setInt(4, Api.integer(body, "categoryId", 0));
-            statement.setString(5, Api.str(body, "description"));
-            statement.setDouble(6, Api.decimal(body, "price", 0));
-            statement.execute();
-            return statement.getString(1);
+        int code = Api.integer(body, "code", 0);
+        String name = Api.str(body, "name");
+        int categoryId = Api.integer(body, "categoryId", 0);
+        String description = Api.str(body, "description");
+        double price = Api.decimal(body, "price", 0);
+        double stock = Api.decimal(body, "stock", 0);
+
+        if (code <= 0 || name.isBlank() || categoryId <= 0 || description.isBlank() || price <= 0 || stock < 0) {
+            return "Error: Completa todos los datos del producto";
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement(
+                """
+                UPDATE producto
+                   SET nombre = ?,
+                       idcategoria = ?,
+                       descripcion = ?,
+                       precio = ?,
+                       stock = ?
+                 WHERE codigobarras = ?
+                """)) {
+            statement.setString(1, name);
+            statement.setInt(2, categoryId);
+            statement.setString(3, description);
+            statement.setDouble(4, price);
+            statement.setDouble(5, stock);
+            statement.setInt(6, code);
+            int updated = statement.executeUpdate();
+            return updated == 0 ? "Error: Producto no encontrado" : "Producto actualizado";
         }
     }
 

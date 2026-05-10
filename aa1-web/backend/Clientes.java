@@ -79,6 +79,10 @@ public class Clientes implements HttpHandler {
                 createClient(exchange, connection, body);
                 return;
             }
+            if ("update".equalsIgnoreCase(action)) {
+                updateClient(exchange, connection, body);
+                return;
+            }
             toggleCredit(exchange, connection, body);
         }
     }
@@ -166,10 +170,83 @@ public class Clientes implements HttpHandler {
         }
     }
 
+    private void updateClient(HttpExchange exchange, Connection connection, Map<String, Object> body) throws Exception {
+        int clientId = Api.integer(body, "clientId", 0);
+        String name = Api.str(body, "name").trim();
+        String document = Api.str(body, "document").trim();
+        String phone = Api.str(body, "phone").trim();
+        String address = Api.str(body, "address").trim();
+        boolean creditEnabled = Boolean.TRUE.equals(body.get("creditEnabled"));
+
+        if (clientId <= 0 || name.isBlank() || document.isBlank()) {
+            Api.error(exchange, 400, "Cliente, nombre y documento son obligatorios");
+            return;
+        }
+
+        connection.setAutoCommit(false);
+        try {
+            if (documentExistsForOtherClient(connection, document, clientId)) {
+                connection.rollback();
+                Api.error(exchange, 400, "Ya existe otro cliente con ese documento");
+                return;
+            }
+
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "UPDATE persona SET nombre = ?, documento = ?, telefono = ? WHERE id = ?")) {
+                statement.setString(1, name);
+                statement.setString(2, document);
+                if (phone.isBlank()) {
+                    statement.setNull(3, java.sql.Types.VARCHAR);
+                } else {
+                    statement.setString(3, phone);
+                }
+                statement.setInt(4, clientId);
+                int updated = statement.executeUpdate();
+                if (updated == 0) {
+                    connection.rollback();
+                    Api.error(exchange, 404, "Cliente no encontrado");
+                    return;
+                }
+            }
+
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "UPDATE cliente SET direccion = ?, estadocredito = ? WHERE id = ?")) {
+                if (address.isBlank()) {
+                    statement.setNull(1, java.sql.Types.VARCHAR);
+                } else {
+                    statement.setString(1, address);
+                }
+                statement.setInt(2, creditEnabled ? 1 : 0);
+                statement.setInt(3, clientId);
+                statement.executeUpdate();
+            }
+
+            connection.commit();
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Cliente actualizado");
+            response.put("clientId", clientId);
+            Api.ok(exchange, response);
+        } catch (Exception exception) {
+            connection.rollback();
+            throw exception;
+        }
+    }
+
     private boolean documentExists(Connection connection, String document) throws Exception {
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT COUNT(*) FROM persona WHERE documento = ?")) {
             statement.setString(1, document);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() && resultSet.getInt(1) > 0;
+            }
+        }
+    }
+
+    private boolean documentExistsForOtherClient(Connection connection, String document, int clientId) throws Exception {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT COUNT(*) FROM persona WHERE documento = ? AND id <> ?")) {
+            statement.setString(1, document);
+            statement.setInt(2, clientId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() && resultSet.getInt(1) > 0;
             }

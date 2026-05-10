@@ -1204,7 +1204,7 @@ a.primary-button[href*="ventas"]::before {
 }
 
 a.ghost-button[href*="productos"]::before {
-  content: "▦";
+  content: "[]";
 }
 
 a.ghost-button[href*="index"]::before {
@@ -1222,6 +1222,10 @@ a.ghost-button[href*="index"]::before {
   max-height: 360px;
 }
 
+.fixed-table {
+  max-height: 430px;
+}
+
 table {
   width: 100%;
   min-width: 640px;
@@ -1229,7 +1233,8 @@ table {
   background: #fff;
 }
 
-.scroll-table thead th {
+.scroll-table thead th,
+.fixed-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -1348,6 +1353,32 @@ tbody tr:hover {
   border-radius: var(--radius-sm);
   background: #fff;
   padding: 9px 11px;
+}
+
+.compact-filters {
+  margin-bottom: 14px;
+}
+
+#productCode:disabled {
+  background: #f4f0ea;
+  color: var(--muted);
+}
+
+#updateProductButton::before,
+#loadClientFormButton::before {
+  content: "!";
+}
+
+#clearProductFormButton::before,
+#cancelClientFormButton::before,
+#cancelQuickClientButton::before {
+  content: "x";
+}
+
+#toggleClientFormButton::before,
+#toggleQuickClientButton::before,
+#saveClientButton::before {
+  content: "+";
 }
 
 .client-list {

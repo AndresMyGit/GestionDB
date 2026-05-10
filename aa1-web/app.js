@@ -42,6 +42,7 @@ const state = {
   payments: [],
   invoices: [],
   selectedClientId: 0,
+  selectedProductCode: 0,
   selectedCreditId: 0,
   selectedInvoiceId: 0
 };
@@ -289,7 +290,7 @@ function renderProducts() {
         .map((product) => {
           const stockClass = product.stock < 10 ? "low" : "good";
           return `
-            <tr>
+            <tr class="invoice-row ${Number(product.code) === Number(state.selectedProductCode) ? "active" : ""}" data-product-pick="${product.code}">
               <td>${escapeHtml(product.code)}</td>
               <td>
                 <strong>${escapeHtml(product.name)}</strong>
@@ -305,6 +306,56 @@ function renderProducts() {
     : '<tr><td colspan="5">No hay productos para este filtro.</td></tr>';
 }
 
+function productPayloadFromForm(action) {
+  return {
+    action,
+    code: Number(byId("productCode").value),
+    name: byId("productName").value.trim(),
+    categoryId: Number(byId("productCategory").value),
+    price: Number(byId("productPrice").value),
+    stock: Number(byId("productStock").value),
+    description: byId("productDescription").value.trim()
+  };
+}
+
+function validateProductPayload(payload) {
+  if (!payload.code || !payload.name || !payload.categoryId || !payload.price || payload.stock < 0 || !payload.description) {
+    showToast("Completa todos los datos del producto.", "error");
+    return false;
+  }
+  return true;
+}
+
+function resetProductForm() {
+  byId("productForm").reset();
+  byId("productUnit").value = "kg";
+  byId("productCode").disabled = false;
+  byId("saveProductButton").textContent = "Agregar producto";
+  byId("saveProductButton").disabled = false;
+  state.selectedProductCode = 0;
+  renderProducts();
+}
+
+function loadProductIntoForm(code) {
+  const product = getProduct(code);
+  if (!product) {
+    return;
+  }
+
+  state.selectedProductCode = Number(product.code);
+  byId("productCode").value = product.code;
+  byId("productCode").disabled = true;
+  byId("productName").value = product.name;
+  byId("productCategory").value = String(product.categoryId);
+  byId("productPrice").value = product.price;
+  byId("productStock").value = product.stock;
+  byId("productUnit").value = product.unit || "kg";
+  byId("productDescription").value = product.description;
+  byId("saveProductButton").textContent = "Producto seleccionado";
+  byId("saveProductButton").disabled = true;
+  renderProducts();
+}
+
 async function loadProducts() {
   const data = await api("/productos");
   state.products = data.products;
@@ -313,18 +364,8 @@ async function loadProducts() {
 }
 
 async function createProductFromForm() {
-  const payload = {
-    action: "create",
-    code: Number(byId("productCode").value),
-    name: byId("productName").value.trim(),
-    categoryId: Number(byId("productCategory").value),
-    price: Number(byId("productPrice").value),
-    stock: Number(byId("productStock").value),
-    description: byId("productDescription").value.trim()
-  };
-
-  if (!payload.code || !payload.name || !payload.categoryId || !payload.price || payload.stock < 0 || !payload.description) {
-    showToast("Completa todos los datos del producto.", "error");
+  const payload = productPayloadFromForm("create");
+  if (!validateProductPayload(payload)) {
     return;
   }
 
@@ -333,10 +374,26 @@ async function createProductFromForm() {
     body: payload
   });
 
-  byId("productForm").reset();
-  byId("productUnit").value = "kg";
+  resetProductForm();
   await loadProducts();
   showToast(result.message || "Producto guardado.");
+}
+
+async function updateProductFromForm() {
+  const payload = productPayloadFromForm("update");
+  payload.code = Number(state.selectedProductCode || payload.code);
+  if (!validateProductPayload(payload)) {
+    return;
+  }
+
+  const result = await api("/productos", {
+    method: "POST",
+    body: payload
+  });
+
+  await loadProducts();
+  loadProductIntoForm(payload.code);
+  showToast(result.message || "Producto actualizado.");
 }
 
 function renderClients() {
@@ -396,6 +453,78 @@ async function createClient(payload) {
       ...payload
     }
   });
+}
+
+async function updateClient(payload) {
+  return api("/clientes", {
+    method: "POST",
+    body: {
+      action: "update",
+      ...payload
+    }
+  });
+}
+
+function resetClientForm() {
+  const form = byId("clientForm");
+  form.reset();
+  byId("clientFormId").value = "";
+  byId("saveClientButton").textContent = "Guardar cliente";
+}
+
+function toggleClientForm(forceOpen) {
+  const form = byId("clientForm");
+  const button = byId("toggleClientFormButton");
+  const open = typeof forceOpen === "boolean" ? forceOpen : form.classList.contains("hidden");
+  form.classList.toggle("hidden", !open);
+  button.textContent = open ? "Ocultar formulario" : "Agregar nuevo cliente";
+  if (!open) {
+    resetClientForm();
+    return;
+  }
+  byId("clientFormName").focus();
+}
+
+function loadSelectedClientIntoForm() {
+  const client = getClient(state.selectedClientId);
+  if (!client) {
+    showToast("Selecciona un cliente para editar.", "error");
+    return;
+  }
+
+  toggleClientForm(true);
+  byId("clientFormId").value = client.id;
+  byId("clientFormName").value = client.name;
+  byId("clientFormDocument").value = client.document;
+  byId("clientFormPhone").value = client.phone || "";
+  byId("clientFormAddress").value = client.address || "";
+  byId("clientFormCredit").checked = Boolean(client.creditEnabled);
+  byId("saveClientButton").textContent = "Actualizar cliente";
+}
+
+async function saveClientFromForm() {
+  const clientId = Number(byId("clientFormId").value || 0);
+  const payload = {
+    clientId,
+    name: byId("clientFormName").value.trim(),
+    document: byId("clientFormDocument").value.trim(),
+    phone: byId("clientFormPhone").value.trim(),
+    address: byId("clientFormAddress").value.trim(),
+    creditEnabled: byId("clientFormCredit").checked
+  };
+
+  if (!payload.name || !payload.document) {
+    showToast("Completa nombre y documento del cliente.", "error");
+    return;
+  }
+
+  const result = clientId ? await updateClient(payload) : await createClient(payload);
+  if (result.clientId) {
+    state.selectedClientId = Number(result.clientId);
+  }
+  await loadClients();
+  toggleClientForm(false);
+  showToast(result.message || "Cliente guardado.");
 }
 
 async function toggleSelectedClientCredit() {
@@ -537,9 +666,28 @@ function renderCredits() {
   byId("applyCreditButton").disabled = !canPay;
   byId("settleCreditButton").disabled = !canPay;
 
-  const history = state.selectedCreditId
-    ? state.payments.filter((payment) => Number(payment.creditId) === Number(state.selectedCreditId))
-    : state.payments;
+  const mode = byId("creditHistoryMode")?.value || "credit";
+  const search = byId("creditPaymentSearch")?.value.trim().toLowerCase() || "";
+  const selectedCredit = state.credits.find((credit) => Number(credit.id) === Number(state.selectedCreditId));
+  let history = state.payments;
+  if (mode === "credit" && state.selectedCreditId) {
+    history = history.filter((payment) => Number(payment.creditId) === Number(state.selectedCreditId));
+  }
+  if (mode === "client" && selectedCredit) {
+    history = history.filter((payment) => Number(payment.clientId) === Number(selectedCredit.clientId));
+  }
+  if (search) {
+    history = history.filter((payment) => {
+      const haystack = [
+        payment.client,
+        payment.document,
+        payment.invoiceId,
+        payment.creditId,
+        payment.paymentId
+      ].join(" ").toLowerCase();
+      return haystack.includes(search) || `fac-${payment.invoiceId}`.includes(search);
+    });
+  }
   byId("creditHistoryCount").textContent = `${history.length} movimientos`;
   byId("creditHistoryTable").innerHTML = history.length
     ? history
@@ -555,7 +703,7 @@ function renderCredits() {
           `
         )
         .join("")
-    : '<tr><td colspan="5">No hay abonos registrados para este credito.</td></tr>';
+    : '<tr><td colspan="5">No hay abonos para esta busqueda.</td></tr>';
 }
 
 async function loadCredits() {
@@ -1073,6 +1221,17 @@ function attachProductsEvents() {
     createProductFromForm().catch((error) => showToast(error.message, "error"));
   });
   byId("productFilter").addEventListener("change", renderProducts);
+  byId("productsTable").addEventListener("click", (event) => {
+    const row = event.target.closest("[data-product-pick]");
+    if (!row) {
+      return;
+    }
+    loadProductIntoForm(row.dataset.productPick);
+  });
+  byId("updateProductButton").addEventListener("click", () => {
+    updateProductFromForm().catch((error) => showToast(error.message, "error"));
+  });
+  byId("clearProductFormButton").addEventListener("click", resetProductForm);
 }
 
 function attachClientsEvents() {
@@ -1087,6 +1246,13 @@ function attachClientsEvents() {
   });
   byId("toggleCreditButton").addEventListener("click", () => {
     toggleSelectedClientCredit().catch((error) => showToast(error.message, "error"));
+  });
+  byId("toggleClientFormButton").addEventListener("click", () => toggleClientForm());
+  byId("loadClientFormButton").addEventListener("click", loadSelectedClientIntoForm);
+  byId("cancelClientFormButton").addEventListener("click", () => toggleClientForm(false));
+  byId("clientForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveClientFromForm().catch((error) => showToast(error.message, "error"));
   });
 }
 
@@ -1103,6 +1269,8 @@ function attachCreditsEvents() {
     state.selectedCreditId = Number(event.target.value || 0);
     renderCredits();
   });
+  byId("creditHistoryMode").addEventListener("change", renderCredits);
+  byId("creditPaymentSearch").addEventListener("input", renderCredits);
   byId("creditsTable").addEventListener("click", (event) => {
     const row = event.target.closest("[data-credit-pick]");
     if (!row) {
@@ -1155,6 +1323,8 @@ function attachCutsEvents() {
 
 function initLoginPage() {
   const loginForm = byId("loginForm");
+  const demoButton = document.querySelector("#demoButton");
+  const resetButton = document.querySelector("#resetDemoButton");
 
   if (state.session) {
     byId("usernameInput").value = state.session.name || "";
@@ -1183,6 +1353,27 @@ function initLoginPage() {
       byId("loginError").textContent = error.message;
     }
   });
+
+  if (demoButton) {
+    demoButton.addEventListener("click", () => {
+      byId("usernameInput").value = "PENE";
+      byId("passwordInput").value = "1234";
+      loginForm.requestSubmit();
+    });
+  }
+
+  if (resetButton) {
+    resetButton.addEventListener("click", () => {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(CART_KEY);
+      state.session = null;
+      state.cart = [];
+      byId("usernameInput").value = "";
+      byId("passwordInput").value = "";
+      byId("loginError").textContent = "";
+      showToast("Sesion local reiniciada.");
+    });
+  }
 }
 
 async function initWorkspace() {

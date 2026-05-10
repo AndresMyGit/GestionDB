@@ -126,7 +126,11 @@
                   <span>Descripcion</span>
                   <textarea id="productDescription" rows="4" placeholder="Describe el corte, empaque o presentacion"></textarea>
                 </label>
-                <button class="primary-button" type="submit">Agregar producto</button>
+                <div class="button-row full-row">
+                  <button class="primary-button" type="submit" id="saveProductButton">Agregar producto</button>
+                  <button class="ghost-button" type="button" id="updateProductButton">Actualizar producto</button>
+                  <button class="ghost-button" type="button" id="clearProductFormButton">Limpiar</button>
+                </div>
               </form>
             </article>
 
@@ -150,7 +154,7 @@
                 </label>
               </div>
 
-              <div class="table-wrap">
+              <div class="table-wrap fixed-table">
                 <table>
                   <thead>
                     <tr>

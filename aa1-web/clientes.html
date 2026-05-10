@@ -62,7 +62,7 @@
             <span class="badge-soft">Busqueda + saldo + credito</span>
           </div>
 
-          <div class="split-grid reveal delay-1">
+          <div class="split-grid wide reveal delay-1">
             <article class="panel">
               <div class="panel-head">
                 <div>
@@ -108,6 +108,49 @@
               </div>
 
               <button class="ghost-button full" type="button" id="toggleCreditButton">Cambiar estado de credito</button>
+            </article>
+
+            <article class="panel full-span">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Gestion de clientes</p>
+                  <h3>Crear o actualizar cliente</h3>
+                </div>
+                <button class="ghost-button" type="button" id="toggleClientFormButton">Agregar nuevo cliente</button>
+              </div>
+
+              <form class="quick-client-form hidden" id="clientForm">
+                <input id="clientFormId" type="hidden">
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Nombre</span>
+                    <input id="clientFormName" type="text" placeholder="Cliente frecuente">
+                  </label>
+                  <label class="field">
+                    <span>Documento</span>
+                    <input id="clientFormDocument" type="text" placeholder="1023456789">
+                  </label>
+                  <label class="field">
+                    <span>Telefono</span>
+                    <input id="clientFormPhone" type="text" placeholder="3001234567">
+                  </label>
+                  <label class="field">
+                    <span>Direccion</span>
+                    <input id="clientFormAddress" type="text" placeholder="Barrio o direccion">
+                  </label>
+                </div>
+
+                <label class="quick-client-toggle">
+                  <input id="clientFormCredit" type="checkbox">
+                  <span>Habilitar credito para este cliente</span>
+                </label>
+
+                <div class="button-row">
+                  <button class="primary-button" type="submit" id="saveClientButton">Guardar cliente</button>
+                  <button class="ghost-button" type="button" id="loadClientFormButton">Editar seleccionado</button>
+                  <button class="ghost-button" type="button" id="cancelClientFormButton">Cancelar</button>
+                </div>
+              </form>
             </article>
           </div>
         </section>

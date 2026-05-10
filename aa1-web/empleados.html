@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carniceria Santa Cruz | Inventario</title>
+  <title>Carniceria Santa Cruz | Empleados</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body data-page="inventario">
+<body data-page="empleados">
   <div class="page-shell">
     <section class="app">
       <aside class="sidebar">
@@ -14,7 +14,7 @@
           <p class="eyebrow">Sistema comercial</p>
           <h2>Santa Cruz</h2>
           <p class="side-copy">
-            Entradas, salidas, devoluciones y alertas para mantener llena la vitrina.
+            Control de usuarios activos, cargos y retiros del equipo.
           </p>
         </div>
 
@@ -30,16 +30,15 @@
           <a class="nav-link" data-page-link="empleados" href="./empleados.html"><span class="nav-mark">EM</span><span>Empleados</span></a>
         </nav>
 
-        
-        <p class="side-foot">Control de camara fria, vitrina y movimientos manuales.</p>
+        <p class="side-foot">Solo gerencia puede crear, consultar y despedir empleados.</p>
         <a class="ghost-button full side-button" href="./index.html">Volver al login</a>
       </aside>
 
       <main class="workspace">
         <header class="workspace-header">
           <div>
-              <p class="eyebrow">Control de existencias</p>
-            <h1 id="currentSection">Inventario</h1>
+            <p class="eyebrow">Administracion interna</p>
+            <h1 id="currentSection">Empleados</h1>
           </div>
 
           <div class="header-tools">
@@ -57,99 +56,100 @@
         <section class="view active">
           <div class="section-title reveal">
             <div>
-              <p class="eyebrow">Control operativo</p>
-              <h2>Inventario</h2>
+              <p class="eyebrow">Equipo</p>
+              <h2>Empleados</h2>
             </div>
-            <span class="badge-soft">Reposicion + devoluciones + historial</span>
+            <span class="badge-soft">Gerente + empleado + estado</span>
           </div>
 
-          <div class="inventory-grid reveal delay-1">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Alertas de vitrina</p>
-                  <h3>Prioridad de reposicion</h3>
-                </div>
-              </div>
-
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Codigo</th>
-                      <th>Producto</th>
-                      <th>Stock</th>
-                    </tr>
-                  </thead>
-                  <tbody id="lowStockTable"></tbody>
-                </table>
-              </div>
+          <div class="stats-grid compact reveal delay-1">
+            <article class="stat-card">
+              <span>Total empleados</span>
+              <strong id="employeeCount">0</strong>
             </article>
+            <article class="stat-card">
+              <span>Activos</span>
+              <strong id="employeeActiveCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span>Gerentes</span>
+              <strong id="employeeManagerCount">0</strong>
+            </article>
+          </div>
 
+          <div class="split-grid wide reveal delay-2">
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Camara y mostrador</p>
-                  <h3>Actualizar stock</h3>
+                  <p class="eyebrow">Nuevo acceso</p>
+                  <h3>Crear empleado</h3>
                 </div>
               </div>
 
-              <form id="inventoryForm">
+              <form class="form-grid" id="employeeForm">
                 <label class="field">
-                  <span>Producto</span>
-                  <select id="inventoryProductSelect"></select>
+                  <span>Nombre</span>
+                  <input id="employeeName" type="text" placeholder="Nombre completo">
                 </label>
-
-                <div class="detail-grid compact">
-                  <div class="detail-item">
-                    <span>Codigo</span>
-                    <strong id="inventoryCode">-</strong>
-                  </div>
-                  <div class="detail-item">
-                    <span>Stock actual</span>
-                    <strong id="inventoryCurrentStock">-</strong>
-                  </div>
-                </div>
-
                 <label class="field">
-                  <span>Operacion</span>
-                  <select id="inventoryMode">
-                    <option value="adjust">Ajustar stock total</option>
-                    <option value="return">Registrar devolucion</option>
-                    <option value="ingress">Ingreso proveedor</option>
-                    <option value="manualOut">Salida manual</option>
+                  <span>Documento</span>
+                  <input id="employeeDocument" type="text" placeholder="1000000000">
+                </label>
+                <label class="field">
+                  <span>Telefono</span>
+                  <input id="employeePhone" type="text" placeholder="3001234567">
+                </label>
+                <label class="field">
+                  <span>Contrasena</span>
+                  <input id="employeePassword" type="password" placeholder="Clave de ingreso">
+                </label>
+                <label class="field">
+                  <span>Salario</span>
+                  <input id="employeeSalary" type="number" min="0" step="0.01" placeholder="1750000">
+                </label>
+                <label class="field">
+                  <span>Cargo</span>
+                  <select id="employeeRole">
+                    <option value="2">Empleado</option>
+                    <option value="1">Gerente</option>
                   </select>
                 </label>
-
-                <label class="field">
-                  <span>Cantidad</span>
-                  <input id="inventoryAmount" type="number" min="0.01" step="0.01" placeholder="5.00">
-                </label>
-
-                <button class="primary-button full" type="submit">Actualizar inventario</button>
+                <div class="button-row full-row">
+                  <button class="primary-button" type="submit">Crear empleado</button>
+                  <button class="ghost-button" type="button" id="clearEmployeeFormButton">Limpiar</button>
+                </div>
               </form>
             </article>
 
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Historial</p>
-                  <h3>Movimientos recientes</h3>
+                  <p class="eyebrow">Consulta</p>
+                  <h3>Listado de empleados</h3>
                 </div>
+                <label class="filter-inline">
+                  <span>Buscar</span>
+                  <input id="employeeSearch" type="text" placeholder="Nombre o documento">
+                </label>
               </div>
-              <div class="table-wrap scroll-table">
+
+              <div class="table-wrap fixed-table">
                 <table>
                   <thead>
                     <tr>
-                      <th>Fecha</th>
-                      <th>Codigo</th>
-                      <th>Producto</th>
-                      <th>Motivo</th>
-                      <th>Cantidad</th>
+                      <th>ID</th>
+                      <th>Empleado</th>
+                      <th>Cargo</th>
+                      <th>Salario</th>
+                      <th>Estado</th>
                     </tr>
                   </thead>
-                  <tbody id="inventoryMovements"></tbody>
+                  <tbody id="employeesTable"></tbody>
                 </table>
+              </div>
+
+              <div class="button-row">
+                <button class="ghost-button" type="button" id="dismissEmployeeButton">Despedir seleccionado</button>
               </div>
             </article>
           </div>

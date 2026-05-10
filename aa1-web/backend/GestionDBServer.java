@@ -33,6 +33,7 @@ public class GestionDBServer {
         server.createContext("/api/credito", new Credito());
         server.createContext("/api/facturas", new Facturas());
         server.createContext("/api/cortes", new Cortes());
+        server.createContext("/api/empleados", new Empleados());
         Path staticRoot = root;
         server.createContext("/", exchange -> serveStatic(exchange, staticRoot));
         server.setExecutor(null);

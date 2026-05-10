@@ -30,11 +30,17 @@ public class Login implements HttpHandler {
                 Map<String, Object> employee = Api.one(
                         connection,
                         """
-                        SELECT p.id, p.nombre, e.cargo
+                        SELECT p.id, p.nombre, e.id_cargo,
+                               CASE e.id_cargo
+                                   WHEN 1 THEN 'Gerente'
+                                   WHEN 2 THEN 'Empleado'
+                                   ELSE 'Sin cargo'
+                               END AS cargo
                           FROM empleado e
                           JOIN persona p ON p.id = e.id
                          WHERE (LOWER(p.nombre) = LOWER(?) OR p.documento = ?)
                            AND e.contrasena = ?
+                           AND NVL(e.estado, 1) = 1
                         """,
                         statement -> {
                             statement.setString(1, username);
@@ -45,6 +51,7 @@ public class Login implements HttpHandler {
                             Map<String, Object> row = new LinkedHashMap<>();
                             row.put("employeeId", resultSet.getInt("id"));
                             row.put("name", Api.text(resultSet, "nombre"));
+                            row.put("roleId", resultSet.getInt("id_cargo"));
                             row.put("role", Api.text(resultSet, "cargo"));
                             return row;
                         });

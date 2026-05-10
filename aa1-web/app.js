@@ -11,8 +11,11 @@ const PAGE_TITLES = {
   inventario: "Inventario",
   credito: "Credito",
   facturas: "Facturas",
-  cortes: "Cortes"
+  cortes: "Cortes",
+  empleados: "Empleados"
 };
+
+const EMPLOYEE_ALLOWED_PAGES = new Set(["ventas", "clientes", "inventario", "credito", "facturas", "cortes"]);
 
 const monthNames = [
   "",
@@ -41,10 +44,12 @@ const state = {
   credits: [],
   payments: [],
   invoices: [],
+  employees: [],
   selectedClientId: 0,
   selectedProductCode: 0,
   selectedCreditId: 0,
-  selectedInvoiceId: 0
+  selectedInvoiceId: 0,
+  selectedEmployeeId: 0
 };
 
 function byId(id) {
@@ -84,6 +89,10 @@ async function api(path, options = {}) {
     }
   };
 
+  if (state.session?.employeeId) {
+    request.headers["X-Employee-Id"] = String(state.session.employeeId);
+  }
+
   if (options.body) {
     request.body = JSON.stringify(options.body);
   }
@@ -104,7 +113,24 @@ function redirectTo(pageName) {
 function ensureSession() {
   if (page !== "login" && !state.session) {
     redirectTo("login");
+    return;
   }
+
+  if (page !== "login" && state.session && !canAccessPage(page)) {
+    redirectTo(defaultPageForSession());
+  }
+}
+
+function isManager() {
+  return Number(state.session?.roleId) === 1 || String(state.session?.role || "").toLowerCase() === "gerente";
+}
+
+function canAccessPage(pageName) {
+  return isManager() || EMPLOYEE_ALLOWED_PAGES.has(pageName);
+}
+
+function defaultPageForSession() {
+  return isManager() ? "resumen" : "ventas";
 }
 
 function formatMoney(value) {
@@ -185,10 +211,13 @@ function syncShell() {
   }
 
   if (operatorLabel) {
-    operatorLabel.textContent = state.session?.name || "Operador";
+    const role = state.session?.role ? ` - ${state.session.role}` : "";
+    operatorLabel.textContent = `${state.session?.name || "Operador"}${role}`;
   }
 
   document.querySelectorAll("[data-page-link]").forEach((link) => {
+    const allowed = canAccessPage(link.dataset.pageLink);
+    link.classList.toggle("hidden", !allowed);
     link.classList.toggle("active", link.dataset.pageLink === page);
   });
 }
@@ -1321,6 +1350,117 @@ function attachCutsEvents() {
   byId("cutYear").addEventListener("change", () => loadCuts().catch((error) => showToast(error.message, "error")));
 }
 
+function renderEmployees() {
+  const search = byId("employeeSearch").value.trim().toLowerCase();
+  const employees = state.employees.filter((employee) => {
+    const text = `${employee.name} ${employee.document} ${employee.role} ${employee.state}`.toLowerCase();
+    return !search || text.includes(search);
+  });
+
+  byId("employeeCount").textContent = String(state.employees.length);
+  byId("employeeActiveCount").textContent = String(state.employees.filter((employee) => Number(employee.stateId) === 1).length);
+  byId("employeeManagerCount").textContent = String(state.employees.filter((employee) => Number(employee.roleId) === 1).length);
+
+  byId("employeesTable").innerHTML = employees.length
+    ? employees
+        .map(
+          (employee) => `
+            <tr class="invoice-row ${Number(employee.id) === Number(state.selectedEmployeeId) ? "active" : ""}" data-employee-pick="${employee.id}">
+              <td>${escapeHtml(employee.id)}</td>
+              <td>
+                <strong>${escapeHtml(employee.name)}</strong>
+                <div class="subtle">${escapeHtml(employee.document)} - ${escapeHtml(employee.phone || "-")}</div>
+              </td>
+              <td>${escapeHtml(employee.role)}</td>
+              <td>${formatMoney(employee.salary)}</td>
+              <td><span class="stock-pill ${Number(employee.stateId) === 1 ? "good" : "low"}">${escapeHtml(employee.state)}</span></td>
+            </tr>
+          `
+        )
+        .join("")
+    : '<tr><td colspan="5">No hay empleados para esta busqueda.</td></tr>';
+
+  const selected = state.employees.find((employee) => Number(employee.id) === Number(state.selectedEmployeeId));
+  byId("dismissEmployeeButton").disabled = !selected || Number(selected.stateId) !== 1 || Number(selected.id) === Number(state.session?.employeeId);
+}
+
+async function loadEmployees() {
+  const data = await api("/empleados");
+  state.employees = data.employees;
+  if (!state.selectedEmployeeId && state.employees.length) {
+    state.selectedEmployeeId = state.employees[0].id;
+  }
+  renderEmployees();
+}
+
+function resetEmployeeForm() {
+  byId("employeeForm").reset();
+  byId("employeeRole").value = "2";
+}
+
+async function createEmployeeFromForm() {
+  const payload = {
+    name: byId("employeeName").value.trim(),
+    document: byId("employeeDocument").value.trim(),
+    phone: byId("employeePhone").value.trim(),
+    password: byId("employeePassword").value.trim(),
+    salary: Number(byId("employeeSalary").value || 0),
+    roleId: Number(byId("employeeRole").value)
+  };
+
+  if (!payload.name || !payload.document || !payload.password || !payload.roleId) {
+    showToast("Completa nombre, documento, contrasena y cargo.", "error");
+    return;
+  }
+
+  const result = await api("/empleados", {
+    method: "POST",
+    body: payload
+  });
+  resetEmployeeForm();
+  state.selectedEmployeeId = Number(result.employeeId || 0);
+  await loadEmployees();
+  showToast(result.message || "Empleado creado.");
+}
+
+async function dismissSelectedEmployee() {
+  const employee = state.employees.find((item) => Number(item.id) === Number(state.selectedEmployeeId));
+  if (!employee) {
+    showToast("Selecciona un empleado.", "error");
+    return;
+  }
+
+  const result = await api("/empleados", {
+    method: "POST",
+    body: {
+      action: "dismiss",
+      employeeId: employee.id
+    }
+  });
+  await loadEmployees();
+  showToast(result.message || "Empleado despedido.");
+}
+
+function attachEmployeesEvents() {
+  byId("employeeSearch").addEventListener("input", renderEmployees);
+  byId("employeeForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    createEmployeeFromForm().catch((error) => showToast(error.message, "error"));
+  });
+  byId("employeesTable").addEventListener("click", (event) => {
+    const row = event.target.closest("[data-employee-pick]");
+    if (!row) {
+      return;
+    }
+    state.selectedEmployeeId = Number(row.dataset.employeePick);
+    renderEmployees();
+  });
+  byId("dismissEmployeeButton").addEventListener("click", () => {
+    dismissSelectedEmployee().catch((error) => showToast(error.message, "error"));
+  });
+  byId("clearEmployeeFormButton").addEventListener("click", resetEmployeeForm);
+}
+
 function initLoginPage() {
   const loginForm = byId("loginForm");
   const demoButton = document.querySelector("#demoButton");
@@ -1345,10 +1485,11 @@ function initLoginPage() {
       saveSession({
         employeeId: result.employeeId,
         name: result.name,
+        roleId: result.roleId,
         role: result.role
       });
       byId("loginError").textContent = "";
-      redirectTo("resumen");
+      redirectTo(defaultPageForSession());
     } catch (error) {
       byId("loginError").textContent = error.message;
     }
@@ -1378,6 +1519,9 @@ function initLoginPage() {
 
 async function initWorkspace() {
   ensureSession();
+  if (!state.session || !canAccessPage(page)) {
+    return;
+  }
   syncShell();
 
   if (page === "resumen") {
@@ -1417,6 +1561,11 @@ async function initWorkspace() {
   if (page === "cortes") {
     attachCutsEvents();
     await loadCuts();
+  }
+
+  if (page === "empleados") {
+    attachEmployeesEvents();
+    await loadEmployees();
   }
 }
 

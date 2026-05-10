@@ -74,6 +74,9 @@ public class Productos implements HttpHandler {
         }
 
         try (Connection connection = Conexion.getConnection()) {
+            if (!Api.requireManager(exchange, connection)) {
+                return;
+            }
             connection.setAutoCommit(false);
             String message;
             if ("update".equalsIgnoreCase(action)) {

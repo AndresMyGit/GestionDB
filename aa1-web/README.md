@@ -11,6 +11,7 @@ Reconstruccion visual del proyecto Java Swing `AA1` en una version web hecha con
 - `credito.html`
 - `facturas.html`
 - `cortes.html`
+- `empleados.html`
 - `styles.css`
 - `app.js`
 
@@ -25,6 +26,7 @@ Reconstruccion visual del proyecto Java Swing `AA1` en una version web hecha con
 - `credito.html`: cartera y abonos
 - `facturas.html`: busqueda y detalle de facturas
 - `cortes.html`: resumen financiero por periodo
+- `empleados.html`: administracion de empleados, cargos y despidos para gerencia
 
 ## Que conserva del proyecto original
 
@@ -58,7 +60,7 @@ Reconstruccion visual del proyecto Java Swing `AA1` en una version web hecha con
 La web ahora usa un backend Java/JDBC:
 
 - `backend/Conexion.java`: conexion Oracle configurable por entorno (servicio `freepdb1` por defecto).
-- `backend/Login.java`, `Resumen.java`, `Ventas.java`, `Productos.java`, `Clientes.java`, `Inventario.java`, `Credito.java`, `Facturas.java`, `Cortes.java`: un endpoint por ventana HTML.
+- `backend/Login.java`, `Resumen.java`, `Ventas.java`, `Productos.java`, `Clientes.java`, `Inventario.java`, `Credito.java`, `Facturas.java`, `Cortes.java`, `Empleados.java`: un endpoint por ventana HTML.
 - `app.js`: consume `/api/*` y deja `localStorage` solo para la sesion local y el carrito temporal.
 
 Puedes cambiar la conexion sin editar codigo usando variables de entorno:

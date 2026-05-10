@@ -41,7 +41,7 @@ public final class Api {
 
     public static void cors(HttpExchange exchange) {
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, X-Employee-Id");
         exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     }
 
@@ -85,6 +85,40 @@ public final class Api {
         response.put("ok", false);
         response.put("message", message);
         json(exchange, status, response);
+    }
+
+    public static int employeeId(HttpExchange exchange) {
+        String value = exchange.getRequestHeaders().getFirst("X-Employee-Id");
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    public static boolean isManager(Connection connection, HttpExchange exchange) throws SQLException {
+        int employeeId = employeeId(exchange);
+        if (employeeId <= 0) {
+            return false;
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT COUNT(*) FROM empleado WHERE id = ? AND id_cargo = 1 AND NVL(estado, 1) = 1")) {
+            statement.setInt(1, employeeId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() && resultSet.getInt(1) > 0;
+            }
+        }
+    }
+
+    public static boolean requireManager(HttpExchange exchange, Connection connection) throws IOException, SQLException {
+        if (isManager(connection, exchange)) {
+            return true;
+        }
+        error(exchange, 403, "Solo el gerente puede realizar esta accion");
+        return false;
     }
 
     public static String query(HttpExchange exchange, String name) {

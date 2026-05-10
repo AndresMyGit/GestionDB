@@ -100,24 +100,31 @@ public final class Api {
     }
 
     public static boolean isManager(Connection connection, HttpExchange exchange) throws SQLException {
-        int employeeId = employeeId(exchange);
-        if (employeeId <= 0) {
-            return false;
-        }
-        try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT COUNT(*) FROM empleado WHERE id = ? AND id_cargo = 1 AND NVL(estado, 1) = 1")) {
-            statement.setInt(1, employeeId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() && resultSet.getInt(1) > 0;
-            }
+        try {
+            return ManagerAccessPolicy.INSTANCE.isAllowed(connection, exchange);
+        } catch (SQLException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new SQLException(exception);
         }
     }
 
     public static boolean requireManager(HttpExchange exchange, Connection connection) throws IOException, SQLException {
-        if (isManager(connection, exchange)) {
-            return true;
+        return requireAccess(exchange, connection, ManagerAccessPolicy.INSTANCE);
+    }
+
+    public static boolean requireAccess(HttpExchange exchange, Connection connection, AccessPolicy policy)
+            throws IOException, SQLException {
+        try {
+            if (policy.isAllowed(connection, exchange)) {
+                return true;
+            }
+        } catch (SQLException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new SQLException(exception);
         }
-        error(exchange, 403, "Solo el gerente puede realizar esta accion");
+        error(exchange, 403, policy.deniedMessage());
         return false;
     }
 

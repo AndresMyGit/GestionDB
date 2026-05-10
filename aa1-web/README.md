@@ -63,6 +63,12 @@ La web ahora usa un backend Java/JDBC:
 - `backend/Login.java`, `Resumen.java`, `Ventas.java`, `Productos.java`, `Clientes.java`, `Inventario.java`, `Credito.java`, `Facturas.java`, `Cortes.java`, `Empleados.java`: un endpoint por ventana HTML.
 - `app.js`: consume `/api/*` y deja `localStorage` solo para la sesion local y el carrito temporal.
 
+## Patrones de diseno en backend
+
+- Singleton: `backend/Conexion.java` centraliza una unica instancia de configuracion y apertura de conexiones con `getInstance()`.
+- Factory Method: `backend/HandlerFactory.java` crea los `HttpHandler` usados por `GestionDBServer`.
+- Strategy: `backend/AccessPolicy.java` define la politica de acceso y `backend/ManagerAccessPolicy.java` implementa la regla de gerente.
+
 Puedes cambiar la conexion sin editar codigo usando variables de entorno:
 
 ```powershell

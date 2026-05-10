@@ -24,16 +24,16 @@ public class GestionDBServer {
         }
 
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-        server.createContext("/api/login", new Login());
-        server.createContext("/api/resumen", new Resumen());
-        server.createContext("/api/ventas", new Ventas());
-        server.createContext("/api/productos", new Productos());
-        server.createContext("/api/clientes", new Clientes());
-        server.createContext("/api/inventario", new Inventario());
-        server.createContext("/api/credito", new Credito());
-        server.createContext("/api/facturas", new Facturas());
-        server.createContext("/api/cortes", new Cortes());
-        server.createContext("/api/empleados", new Empleados());
+        registerApi(server, "login");
+        registerApi(server, "resumen");
+        registerApi(server, "ventas");
+        registerApi(server, "productos");
+        registerApi(server, "clientes");
+        registerApi(server, "inventario");
+        registerApi(server, "credito");
+        registerApi(server, "facturas");
+        registerApi(server, "cortes");
+        registerApi(server, "empleados");
         Path staticRoot = root;
         server.createContext("/", exchange -> serveStatic(exchange, staticRoot));
         server.setExecutor(null);
@@ -63,6 +63,10 @@ public class GestionDBServer {
         exchange.sendResponseHeaders(200, bytes.length);
         exchange.getResponseBody().write(bytes);
         exchange.close();
+    }
+
+    private static void registerApi(HttpServer server, String name) {
+        server.createContext("/api/" + name, HandlerFactory.create(name));
     }
 
     private static String mime(Path file) {

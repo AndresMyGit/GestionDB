@@ -92,8 +92,12 @@
               <form id="inventoryForm">
                 <label class="field">
                   <span>Producto</span>
-                  <select id="inventoryProductSelect"></select>
+                  <input id="inventoryProductSearch" type="text" placeholder="Codigo o nombre del producto">
                 </label>
+
+                <input id="inventoryProductSelect" type="hidden">
+
+                <div class="stack-list" id="inventoryProductMatches"></div>
 
                 <div class="detail-grid compact">
                   <div class="detail-item">

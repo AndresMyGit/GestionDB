@@ -3,9 +3,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public final class Conexion {
-    private static final String DEFAULT_URL = "jdbc:oracle:thin:@//localhost:1521/freepdb1";
-    private static final String DEFAULT_USER = "ANDRES";
-    private static final String DEFAULT_PASSWORD = "1234";
+    private static final String DEFAULT_URL = "jdbc:oracle:thin:@gestiondb2_high?TNS_ADMIN=./wallet";
+    private static final String DEFAULT_USER = "ADMIN";
+    private static final String DEFAULT_PASSWORD = "DS1405gg2005?";
 
     private Conexion() {
     }

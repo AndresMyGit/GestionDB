@@ -43,6 +43,8 @@ const state = {
   saleClientMatches: [],
   selectedSaleClient: null,
   saleClientSearchLoading: false,
+  inventoryProductMatches: [],
+  selectedInventoryCode: 0,
   methods: [],
   credits: [],
   payments: [],
@@ -608,9 +610,6 @@ async function toggleSelectedClientCredit() {
 }
 
 function renderInventory() {
-  const selector = byId("inventoryProductSelect");
-  const previous = selector.value || String(state.products[0]?.code || "");
-
   byId("lowStockTable").innerHTML = state.lowStock?.length
     ? state.lowStock
         .map(
@@ -625,18 +624,29 @@ function renderInventory() {
         .join("")
     : '<tr><td colspan="3">No hay alertas criticas.</td></tr>';
 
-  selector.innerHTML = state.products
-    .map(
-      (product) => `<option value="${product.code}">${escapeHtml(product.name)}</option>`
-    )
-    .join("");
-  selector.value = state.products.some((product) => String(product.code) === String(previous))
-    ? previous
-    : String(state.products[0]?.code || "");
+  const selected = getProduct(state.selectedInventoryCode);
+  if (!selected) {
+    state.selectedInventoryCode = 0;
+    byId("inventoryProductSelect").value = "";
+  } else {
+    byId("inventoryProductSelect").value = String(selected.code);
+  }
 
-  const selected = getProduct(selector.value);
   byId("inventoryCode").textContent = selected?.code || "-";
   byId("inventoryCurrentStock").textContent = selected ? formatNumber(selected.stock) : "-";
+
+  byId("inventoryProductMatches").innerHTML = !selected && state.inventoryProductMatches.length
+    ? state.inventoryProductMatches
+        .map(
+          (product) => `
+            <button class="client-item" type="button" data-inventory-product-pick="${product.code}">
+              <strong>${escapeHtml(product.name)}</strong>
+              <span class="subtle">${escapeHtml(product.code)} - ${formatNumber(product.stock)}</span>
+            </button>
+          `
+        )
+        .join("")
+    : "";
 
   byId("inventoryMovements").innerHTML = state.movements?.length
     ? state.movements
@@ -663,14 +673,26 @@ async function loadInventory() {
   state.products = data.products;
   state.lowStock = data.lowStock;
   state.movements = data.movements;
+
+  if (!state.products.some((product) => Number(product.code) === Number(state.selectedInventoryCode))) {
+    state.selectedInventoryCode = 0;
+    state.inventoryProductMatches = [];
+  }
+
   renderInventory();
 }
 
 async function updateInventory() {
+  const selectedCode = Number(byId("inventoryProductSelect").value || state.selectedInventoryCode || 0);
+  if (!selectedCode) {
+    showToast("Busca y selecciona un producto antes de actualizar stock.", "error");
+    return;
+  }
+
   const result = await api("/inventario", {
     method: "POST",
     body: {
-      code: Number(byId("inventoryProductSelect").value),
+      code: selectedCode,
       mode: byId("inventoryMode").value,
       amount: Number(byId("inventoryAmount").value)
     }
@@ -996,6 +1018,10 @@ function fillSalesSelects() {
   methodSelect.value = currentMethod;
 }
 
+function saleClientLabel(client) {
+  return client ? `${client.name} - ${client.document}` : "";
+}
+
 function normalizeSaleClient(client) {
   if (!client) {
     return null;
@@ -1016,7 +1042,7 @@ function setSelectedSaleClient(client) {
   state.saleClientMatches = [];
   state.saleClientSearchLoading = false;
   byId("customerSelect").value = state.selectedSaleClient ? String(state.selectedSaleClient.id) : "";
-  byId("customerSearch").value = state.selectedSaleClient ? state.selectedSaleClient.document : "";
+  byId("customerSearch").value = saleClientLabel(state.selectedSaleClient);
 }
 
 function clearSelectedSaleClient(keepQuery = true) {
@@ -1045,7 +1071,7 @@ function renderSaleClientLookup() {
           <strong>${formatMoney(selected.debt)}</strong>
         </div>
       `
-    : '<div class="stack-item"><strong>Busca un cliente por documento para continuar.</strong></div>';
+    : '<div class="stack-item"><strong>Busca un cliente por nombre o documento para continuar.</strong></div>';
 
   const query = byId("customerSearch").value.trim();
   if (!query) {
@@ -1054,7 +1080,7 @@ function renderSaleClientLookup() {
   }
 
   if (query.length < 2) {
-    matches.innerHTML = '<div class="stack-item"><strong>Escribe al menos 2 caracteres del documento.</strong></div>';
+    matches.innerHTML = "";
     return;
   }
 
@@ -1063,7 +1089,7 @@ function renderSaleClientLookup() {
     return;
   }
 
-  if (selected && query === selected.document && !state.saleClientMatches.length) {
+  if (selected && query === saleClientLabel(selected) && !state.saleClientMatches.length) {
     matches.innerHTML = "";
     return;
   }
@@ -1079,11 +1105,11 @@ function renderSaleClientLookup() {
           `
         )
         .join("")
-    : '<div class="stack-item"><strong>No hay clientes para esa busqueda.</strong></div>';
+    : "";
 }
 
 async function searchSaleClients(query, requestId) {
-  const data = await api(`/clientes?search=${encodeURIComponent(query)}&limit=8`);
+  const data = await api(`/clientes?search=${encodeURIComponent(query)}&limit=3`);
   if (requestId !== searchSaleClients.requestId) {
     return;
   }
@@ -1126,6 +1152,72 @@ function scheduleSaleClientSearch() {
       showToast(error.message, "error");
     });
   }, 220);
+}
+
+function inventoryProductLabel(product) {
+  return product ? `${product.code} - ${product.name}` : "";
+}
+
+function findInventoryProductMatches(query) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return [];
+  }
+
+  return state.products
+    .map((product) => {
+      const code = String(product.code || "").toLowerCase();
+      const name = String(product.name || "").toLowerCase();
+      let priority = -1;
+
+      if (code === normalized) {
+        priority = 0;
+      } else if (code.startsWith(normalized)) {
+        priority = 1;
+      } else if (name.startsWith(normalized)) {
+        priority = 2;
+      } else if (name.includes(normalized)) {
+        priority = 3;
+      }
+
+      return priority >= 0 ? { product, priority } : null;
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.priority - right.priority || String(left.product.name).localeCompare(String(right.product.name)))
+    .slice(0, 3)
+    .map((entry) => entry.product);
+}
+
+function setSelectedInventoryProduct(product) {
+  state.selectedInventoryCode = Number(product?.code || 0);
+  state.inventoryProductMatches = [];
+  byId("inventoryProductSelect").value = state.selectedInventoryCode ? String(state.selectedInventoryCode) : "";
+  byId("inventoryProductSearch").value = inventoryProductLabel(product);
+  renderInventory();
+}
+
+function refreshInventoryProductSearch() {
+  const query = byId("inventoryProductSearch").value.trim();
+  const selected = getProduct(state.selectedInventoryCode);
+
+  if (!query) {
+    state.selectedInventoryCode = 0;
+    state.inventoryProductMatches = [];
+    byId("inventoryProductSelect").value = "";
+    renderInventory();
+    return;
+  }
+
+  if (selected && query === inventoryProductLabel(selected)) {
+    state.inventoryProductMatches = [];
+    renderInventory();
+    return;
+  }
+
+  state.selectedInventoryCode = 0;
+  byId("inventoryProductSelect").value = "";
+  state.inventoryProductMatches = findInventoryProductMatches(query);
+  renderInventory();
 }
 
 function renderSales() {
@@ -1402,7 +1494,18 @@ function attachClientsEvents() {
 }
 
 function attachInventoryEvents() {
-  byId("inventoryProductSelect").addEventListener("change", renderInventory);
+  byId("inventoryProductSearch").addEventListener("input", refreshInventoryProductSearch);
+  byId("inventoryProductMatches").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-inventory-product-pick]");
+    if (!button) {
+      return;
+    }
+    const product = state.products.find((item) => String(item.code) === String(button.dataset.inventoryProductPick));
+    if (!product) {
+      return;
+    }
+    setSelectedInventoryProduct(product);
+  });
   byId("inventoryForm").addEventListener("submit", (event) => {
     event.preventDefault();
     updateInventory().catch((error) => showToast(error.message, "error"));

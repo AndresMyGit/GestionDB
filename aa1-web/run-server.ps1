@@ -13,7 +13,14 @@ if ([string]::IsNullOrWhiteSpace($Ojdbc)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($Ojdbc) -or -not (Test-Path $Ojdbc)) {
-    throw "No encontre ojdbc. Define GESTIONDB_OJDBC con la ruta del jar ojdbc."
+    $LocalOjdbc = Join-Path $ProjectRoot "lib\ojdbc11.jar"
+    if (Test-Path $LocalOjdbc) {
+        $Ojdbc = $LocalOjdbc
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Ojdbc) -or -not (Test-Path $Ojdbc)) {
+    throw "No encontre ojdbc. Define GESTIONDB_OJDBC con la ruta del jar ojdbc o coloca ojdbc11.jar en lib."
 }
 
 $OutDir = Join-Path $ProjectRoot "server-out"

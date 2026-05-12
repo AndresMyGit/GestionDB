@@ -33,33 +33,13 @@ public class Clientes implements HttpHandler {
     }
 
     private void get(HttpExchange exchange) throws Exception {
+        String search = Api.query(exchange, "search").trim().toLowerCase();
+        int limit = boundedLimit(Api.query(exchange, "limit"));
+
         try (Connection connection = Conexion.getConnection()) {
-            List<Map<String, Object>> clients = Api.rows(
-                    connection,
-                    """
-                    SELECT p.id, p.nombre, p.documento, p.telefono, c.direccion, c.estadocredito,
-                           NVL((
-                               SELECT SUM(cr.saldo)
-                                 FROM credito cr
-                                WHERE cr.cliente = c.id
-                                  AND cr.estado <> 2
-                           ), 0) AS deuda
-                      FROM cliente c
-                      JOIN persona p ON p.id = c.id
-                     ORDER BY p.nombre
-                    """,
-                    null,
-                    resultSet -> {
-                        Map<String, Object> row = new LinkedHashMap<>();
-                        row.put("id", resultSet.getInt("id"));
-                        row.put("name", Api.text(resultSet, "nombre"));
-                        row.put("document", Api.text(resultSet, "documento"));
-                        row.put("phone", Api.text(resultSet, "telefono"));
-                        row.put("address", Api.text(resultSet, "direccion"));
-                        row.put("creditEnabled", resultSet.getInt("estadocredito") == 1);
-                        row.put("debt", resultSet.getDouble("deuda"));
-                        return row;
-                    });
+            List<Map<String, Object>> clients = search.isBlank()
+                    ? listClients(connection)
+                    : searchClients(connection, search, limit);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("clients", clients);
@@ -118,31 +98,52 @@ public class Clientes implements HttpHandler {
         String address = Api.str(body, "address").trim();
         boolean creditEnabled = Boolean.TRUE.equals(body.get("creditEnabled"));
 
-        if (name.isBlank() || document.isBlank()) {
-            Api.error(exchange, 400, "Nombre y documento son obligatorios");
+        if (document.isBlank()) {
+            Api.error(exchange, 400, "El documento es obligatorio");
             return;
         }
 
         connection.setAutoCommit(false);
         try {
-            if (documentExists(connection, document)) {
-                connection.rollback();
-                Api.error(exchange, 400, "Ya existe un cliente con ese documento");
-                return;
-            }
+            Map<String, Object> person = findPersonByDocument(connection, document);
+            boolean reusedPerson = person != null;
 
-            int clientId = nextClientId(connection);
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO persona (id, nombre, documento, telefono) VALUES (?, ?, ?, ?)")) {
-                statement.setInt(1, clientId);
-                statement.setString(2, name);
-                statement.setString(3, document);
-                if (phone.isBlank()) {
-                    statement.setNull(4, java.sql.Types.VARCHAR);
-                } else {
-                    statement.setString(4, phone);
+            int clientId;
+            String resolvedName;
+            String resolvedPhone;
+
+            if (reusedPerson) {
+                clientId = ((Number) person.get("id")).intValue();
+                if (clientExists(connection, clientId)) {
+                    connection.rollback();
+                    Api.error(exchange, 400, "Ya existe un cliente con ese documento");
+                    return;
                 }
-                statement.executeUpdate();
+                resolvedName = String.valueOf(person.get("name"));
+                resolvedPhone = String.valueOf(person.get("phone"));
+            } else {
+                if (name.isBlank()) {
+                    connection.rollback();
+                    Api.error(exchange, 400, "Si el documento no existe, el nombre es obligatorio");
+                    return;
+                }
+
+                clientId = nextClientId(connection);
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO persona (id, nombre, documento, telefono) VALUES (?, ?, ?, ?)")) {
+                    statement.setInt(1, clientId);
+                    statement.setString(2, name);
+                    statement.setString(3, document);
+                    if (phone.isBlank()) {
+                        statement.setNull(4, java.sql.Types.VARCHAR);
+                    } else {
+                        statement.setString(4, phone);
+                    }
+                    statement.executeUpdate();
+                }
+
+                resolvedName = name;
+                resolvedPhone = phone;
             }
 
             try (PreparedStatement statement = connection.prepareStatement(
@@ -159,10 +160,17 @@ public class Clientes implements HttpHandler {
 
             connection.commit();
             Map<String, Object> response = new LinkedHashMap<>();
-            response.put("message", "Cliente creado");
+            response.put("message", reusedPerson
+                    ? "Cliente creado usando la persona ya registrada"
+                    : "Cliente creado");
             response.put("clientId", clientId);
-            response.put("name", name);
+            response.put("name", resolvedName);
             response.put("document", document);
+            response.put("phone", resolvedPhone);
+            response.put("address", address);
+            response.put("creditEnabled", creditEnabled);
+            response.put("debt", 0);
+            response.put("reusedPerson", reusedPerson);
             Api.ok(exchange, response);
         } catch (Exception exception) {
             connection.rollback();
@@ -187,7 +195,7 @@ public class Clientes implements HttpHandler {
         try {
             if (documentExistsForOtherClient(connection, document, clientId)) {
                 connection.rollback();
-                Api.error(exchange, 400, "Ya existe otro cliente con ese documento");
+                Api.error(exchange, 400, "Ya existe otra persona con ese documento");
                 return;
             }
 
@@ -225,6 +233,11 @@ public class Clientes implements HttpHandler {
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("message", "Cliente actualizado");
             response.put("clientId", clientId);
+            response.put("name", name);
+            response.put("document", document);
+            response.put("phone", phone);
+            response.put("address", address);
+            response.put("creditEnabled", creditEnabled);
             Api.ok(exchange, response);
         } catch (Exception exception) {
             connection.rollback();
@@ -232,10 +245,101 @@ public class Clientes implements HttpHandler {
         }
     }
 
-    private boolean documentExists(Connection connection, String document) throws Exception {
+    private List<Map<String, Object>> listClients(Connection connection) throws Exception {
+        return Api.rows(
+                connection,
+                """
+                SELECT p.id, p.nombre, p.documento, p.telefono, c.direccion, c.estadocredito,
+                       NVL((
+                           SELECT SUM(cr.saldo)
+                             FROM credito cr
+                            WHERE cr.cliente = c.id
+                              AND cr.estado <> 2
+                       ), 0) AS deuda
+                  FROM cliente c
+                  JOIN persona p ON p.id = c.id
+                 ORDER BY p.nombre
+                """,
+                null,
+                this::clientRow);
+    }
+
+    private List<Map<String, Object>> searchClients(Connection connection, String search, int limit) throws Exception {
+        String exact = search;
+        String prefix = search + "%";
+        String contains = "%" + search + "%";
+
+        return Api.rows(
+                connection,
+                """
+                SELECT id, nombre, documento, telefono, direccion, estadocredito, deuda
+                  FROM (
+                        SELECT p.id, p.nombre, p.documento, p.telefono, c.direccion, c.estadocredito,
+                               NVL((
+                                   SELECT SUM(cr.saldo)
+                                     FROM credito cr
+                                    WHERE cr.cliente = c.id
+                                      AND cr.estado <> 2
+                               ), 0) AS deuda,
+                               CASE
+                                   WHEN LOWER(p.documento) = ? THEN 0
+                                   WHEN LOWER(p.documento) LIKE ? THEN 1
+                                   WHEN LOWER(p.nombre) LIKE ? THEN 2
+                                   ELSE 3
+                               END AS prioridad
+                          FROM cliente c
+                          JOIN persona p ON p.id = c.id
+                         WHERE LOWER(p.documento) LIKE ?
+                            OR LOWER(p.nombre) LIKE ?
+                         ORDER BY prioridad, p.nombre
+                       )
+                 WHERE ROWNUM <= ?
+                """,
+                statement -> {
+                    statement.setString(1, exact);
+                    statement.setString(2, prefix);
+                    statement.setString(3, prefix);
+                    statement.setString(4, contains);
+                    statement.setString(5, contains);
+                    statement.setInt(6, limit);
+                },
+                this::clientRow);
+    }
+
+    private Map<String, Object> clientRow(ResultSet resultSet) throws SQLException {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", resultSet.getInt("id"));
+        row.put("name", Api.text(resultSet, "nombre"));
+        row.put("document", Api.text(resultSet, "documento"));
+        row.put("phone", Api.text(resultSet, "telefono"));
+        row.put("address", Api.text(resultSet, "direccion"));
+        row.put("creditEnabled", resultSet.getInt("estadocredito") == 1);
+        row.put("debt", resultSet.getDouble("deuda"));
+        return row;
+    }
+
+    private Map<String, Object> findPersonByDocument(Connection connection, String document) throws Exception {
+        return Api.one(
+                connection,
+                """
+                SELECT id, nombre, telefono
+                  FROM persona
+                 WHERE documento = ?
+                """,
+                statement -> statement.setString(1, document),
+                resultSet -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", resultSet.getInt("id"));
+                    row.put("name", Api.text(resultSet, "nombre"));
+                    row.put("phone", Api.text(resultSet, "telefono"));
+                    return row;
+                });
+    }
+
+    private boolean clientExists(Connection connection, int clientId) throws Exception {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT COUNT(*) FROM persona WHERE documento = ?")) {
-            statement.setString(1, document);
+                "SELECT COUNT(*) FROM cliente WHERE id = ?")) {
+            statement.setInt(1, clientId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() && resultSet.getInt(1) > 0;
             }
@@ -279,5 +383,15 @@ public class Clientes implements HttpHandler {
             resultSet.next();
             return resultSet.getInt(1);
         }
+    }
+
+    private int boundedLimit(String raw) {
+        int limit = 8;
+        try {
+            limit = Integer.parseInt(String.valueOf(raw).trim());
+        } catch (Exception ignored) {
+            // Usa el valor por defecto si el query param no es valido.
+        }
+        return Math.max(1, Math.min(limit, 25));
     }
 }

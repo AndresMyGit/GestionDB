@@ -49,31 +49,6 @@ public class Ventas implements HttpHandler {
                     null,
                     resultSet -> Productos.productRow(resultSet));
 
-            List<Map<String, Object>> clients = Api.rows(
-                    connection,
-                    """
-                    SELECT p.id, p.nombre, p.documento, c.estadocredito,
-                           NVL((
-                               SELECT SUM(cr.saldo)
-                                 FROM credito cr
-                                WHERE cr.cliente = c.id
-                                  AND cr.estado <> 2
-                           ), 0) AS deuda
-                      FROM cliente c
-                      JOIN persona p ON p.id = c.id
-                     ORDER BY p.nombre
-                    """,
-                    null,
-                    resultSet -> {
-                        Map<String, Object> row = new LinkedHashMap<>();
-                        row.put("id", resultSet.getInt("id"));
-                        row.put("name", Api.text(resultSet, "nombre"));
-                        row.put("document", Api.text(resultSet, "documento"));
-                        row.put("creditEnabled", resultSet.getInt("estadocredito") == 1);
-                        row.put("debt", resultSet.getDouble("deuda"));
-                        return row;
-                    });
-
             List<Map<String, Object>> methods = Api.rows(
                     connection,
                     "SELECT id, nombre FROM metodo_pago ORDER BY id",
@@ -87,7 +62,6 @@ public class Ventas implements HttpHandler {
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("products", products);
-            response.put("clients", clients);
             response.put("methods", methods);
             response.put("lastInvoiceId", Api.scalarInt(connection, "SELECT NVL(MAX(idfactura), 0) FROM factura"));
             Api.ok(exchange, response);

@@ -40,6 +40,11 @@ const state = {
   products: [],
   categories: [],
   clients: [],
+  saleClientMatches: [],
+  selectedSaleClient: null,
+  saleClientSearchLoading: false,
+  inventoryProductMatches: [],
+  selectedInventoryCode: 0,
   methods: [],
   credits: [],
   payments: [],
@@ -227,7 +232,13 @@ function getProduct(code) {
 }
 
 function getClient(id) {
-  return state.clients.find((client) => Number(client.id) === Number(id));
+  const clientId = Number(id);
+  if (!clientId) {
+    return null;
+  }
+  return state.clients.find((client) => Number(client.id) === clientId)
+    || state.saleClientMatches.find((client) => Number(client.id) === clientId)
+    || (Number(state.selectedSaleClient?.id) === clientId ? state.selectedSaleClient : null);
 }
 
 function getCartTotal() {
@@ -531,6 +542,28 @@ function loadSelectedClientIntoForm() {
   byId("saveClientButton").textContent = "Actualizar cliente";
 }
 
+function applyClientRouteState() {
+  if (page !== "clientes") {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("openCreate") !== "1") {
+    return;
+  }
+
+  const document = params.get("document") || "";
+  toggleClientForm(true);
+  resetClientForm();
+  byId("clientFormDocument").value = document;
+
+  if (document) {
+    byId("clientFormName").focus();
+  } else {
+    byId("clientFormDocument").focus();
+  }
+}
+
 async function saveClientFromForm() {
   const clientId = Number(byId("clientFormId").value || 0);
   const payload = {
@@ -542,8 +575,10 @@ async function saveClientFromForm() {
     creditEnabled: byId("clientFormCredit").checked
   };
 
-  if (!payload.name || !payload.document) {
-    showToast("Completa nombre y documento del cliente.", "error");
+  if (!payload.document || (clientId && !payload.name)) {
+    showToast(clientId
+      ? "Completa nombre y documento del cliente."
+      : "Completa al menos el documento del cliente.", "error");
     return;
   }
 
@@ -575,9 +610,6 @@ async function toggleSelectedClientCredit() {
 }
 
 function renderInventory() {
-  const selector = byId("inventoryProductSelect");
-  const previous = selector.value || String(state.products[0]?.code || "");
-
   byId("lowStockTable").innerHTML = state.lowStock?.length
     ? state.lowStock
         .map(
@@ -592,18 +624,29 @@ function renderInventory() {
         .join("")
     : '<tr><td colspan="3">No hay alertas criticas.</td></tr>';
 
-  selector.innerHTML = state.products
-    .map(
-      (product) => `<option value="${product.code}">${escapeHtml(product.name)}</option>`
-    )
-    .join("");
-  selector.value = state.products.some((product) => String(product.code) === String(previous))
-    ? previous
-    : String(state.products[0]?.code || "");
+  const selected = getProduct(state.selectedInventoryCode);
+  if (!selected) {
+    state.selectedInventoryCode = 0;
+    byId("inventoryProductSelect").value = "";
+  } else {
+    byId("inventoryProductSelect").value = String(selected.code);
+  }
 
-  const selected = getProduct(selector.value);
   byId("inventoryCode").textContent = selected?.code || "-";
   byId("inventoryCurrentStock").textContent = selected ? formatNumber(selected.stock) : "-";
+
+  byId("inventoryProductMatches").innerHTML = !selected && state.inventoryProductMatches.length
+    ? state.inventoryProductMatches
+        .map(
+          (product) => `
+            <button class="client-item" type="button" data-inventory-product-pick="${product.code}">
+              <strong>${escapeHtml(product.name)}</strong>
+              <span class="subtle">${escapeHtml(product.code)} - ${formatNumber(product.stock)}</span>
+            </button>
+          `
+        )
+        .join("")
+    : "";
 
   byId("inventoryMovements").innerHTML = state.movements?.length
     ? state.movements
@@ -630,14 +673,26 @@ async function loadInventory() {
   state.products = data.products;
   state.lowStock = data.lowStock;
   state.movements = data.movements;
+
+  if (!state.products.some((product) => Number(product.code) === Number(state.selectedInventoryCode))) {
+    state.selectedInventoryCode = 0;
+    state.inventoryProductMatches = [];
+  }
+
   renderInventory();
 }
 
 async function updateInventory() {
+  const selectedCode = Number(byId("inventoryProductSelect").value || state.selectedInventoryCode || 0);
+  if (!selectedCode) {
+    showToast("Busca y selecciona un producto antes de actualizar stock.", "error");
+    return;
+  }
+
   const result = await api("/inventario", {
     method: "POST",
     body: {
-      code: Number(byId("inventoryProductSelect").value),
+      code: selectedCode,
       mode: byId("inventoryMode").value,
       amount: Number(byId("inventoryAmount").value)
     }
@@ -951,29 +1006,10 @@ async function loadCuts() {
 }
 
 function fillSalesSelects() {
-  const clientSelect = byId("customerSelect");
-  if (!clientSelect) {
+  const methodSelect = byId("paymentMethod");
+  if (!methodSelect) {
     return;
   }
-
-  if (!state.clients.length) {
-    clientSelect.innerHTML = '<option value="">Sin clientes registrados</option>';
-    clientSelect.value = "";
-    clientSelect.disabled = true;
-  } else {
-    const currentClient = clientSelect.value || String(state.clients[0]?.id || "");
-    clientSelect.disabled = false;
-    clientSelect.innerHTML = state.clients
-      .map(
-        (client) => `<option value="${client.id}">${escapeHtml(client.name)} - ${escapeHtml(client.document)}</option>`
-      )
-      .join("");
-    clientSelect.value = state.clients.some((client) => String(client.id) === String(currentClient))
-      ? currentClient
-      : String(state.clients[0]?.id || "");
-  }
-
-  const methodSelect = byId("paymentMethod");
   const currentMethod = methodSelect.value;
   methodSelect.innerHTML = '<option value="">Seleccionar</option>' +
     state.methods
@@ -982,11 +1018,214 @@ function fillSalesSelects() {
   methodSelect.value = currentMethod;
 }
 
+function saleClientLabel(client) {
+  return client ? `${client.name} - ${client.document}` : "";
+}
+
+function normalizeSaleClient(client) {
+  if (!client) {
+    return null;
+  }
+  return {
+    id: Number(client.id || 0),
+    name: client.name || "",
+    document: client.document || "",
+    phone: client.phone || "",
+    address: client.address || "",
+    creditEnabled: Boolean(client.creditEnabled),
+    debt: Number(client.debt || 0)
+  };
+}
+
+function setSelectedSaleClient(client) {
+  state.selectedSaleClient = normalizeSaleClient(client);
+  state.saleClientMatches = [];
+  state.saleClientSearchLoading = false;
+  byId("customerSelect").value = state.selectedSaleClient ? String(state.selectedSaleClient.id) : "";
+  byId("customerSearch").value = saleClientLabel(state.selectedSaleClient);
+}
+
+function clearSelectedSaleClient(keepQuery = true) {
+  state.selectedSaleClient = null;
+  byId("customerSelect").value = "";
+  if (!keepQuery) {
+    byId("customerSearch").value = "";
+  }
+}
+
+function renderSaleClientLookup() {
+  const summary = byId("selectedCustomerSummary");
+  const matches = byId("customerMatches");
+  if (!summary || !matches) {
+    return;
+  }
+
+  const selected = state.selectedSaleClient;
+  summary.innerHTML = selected
+    ? `
+        <div class="stack-item">
+          <div>
+            <strong>${escapeHtml(selected.name || "Cliente seleccionado")}</strong>
+            <span class="subtle">${escapeHtml(selected.document)} - ${selected.creditEnabled ? "Credito habilitado" : "Credito bloqueado"}</span>
+          </div>
+          <strong>${formatMoney(selected.debt)}</strong>
+        </div>
+      `
+    : '<div class="stack-item"><strong>Busca un cliente por nombre o documento para continuar.</strong></div>';
+
+  const query = byId("customerSearch").value.trim();
+  if (!query) {
+    matches.innerHTML = "";
+    return;
+  }
+
+  if (query.length < 2) {
+    matches.innerHTML = "";
+    return;
+  }
+
+  if (state.saleClientSearchLoading) {
+    matches.innerHTML = '<div class="stack-item"><strong>Buscando clientes...</strong></div>';
+    return;
+  }
+
+  if (selected && query === saleClientLabel(selected) && !state.saleClientMatches.length) {
+    matches.innerHTML = "";
+    return;
+  }
+
+  matches.innerHTML = state.saleClientMatches.length
+    ? state.saleClientMatches
+        .map(
+          (client) => `
+            <button class="client-item" type="button" data-sale-client-pick="${client.id}">
+              <strong>${escapeHtml(client.name)}</strong>
+              <span class="subtle">${escapeHtml(client.document)} - ${client.creditEnabled ? "Credito habilitado" : "Credito bloqueado"}</span>
+            </button>
+          `
+        )
+        .join("")
+    : "";
+}
+
+async function searchSaleClients(query, requestId) {
+  const data = await api(`/clientes?search=${encodeURIComponent(query)}&limit=3`);
+  if (requestId !== searchSaleClients.requestId) {
+    return;
+  }
+
+  state.saleClientMatches = data.clients || [];
+  state.saleClientSearchLoading = false;
+  renderSales();
+}
+
+function scheduleSaleClientSearch() {
+  const query = byId("customerSearch").value.trim();
+  window.clearTimeout(scheduleSaleClientSearch.timer);
+  searchSaleClients.requestId = (searchSaleClients.requestId || 0) + 1;
+  const requestId = searchSaleClients.requestId;
+
+  clearSelectedSaleClient(true);
+  state.saleClientMatches = [];
+  state.saleClientSearchLoading = false;
+
+  if (!query) {
+    renderSales();
+    return;
+  }
+
+  if (query.length < 2) {
+    renderSales();
+    return;
+  }
+
+  state.saleClientSearchLoading = true;
+  renderSales();
+
+  scheduleSaleClientSearch.timer = window.setTimeout(() => {
+    searchSaleClients(query, requestId).catch((error) => {
+      if (requestId === searchSaleClients.requestId && query === byId("customerSearch").value.trim()) {
+        state.saleClientSearchLoading = false;
+        state.saleClientMatches = [];
+        renderSales();
+      }
+      showToast(error.message, "error");
+    });
+  }, 220);
+}
+
+function inventoryProductLabel(product) {
+  return product ? `${product.code} - ${product.name}` : "";
+}
+
+function findInventoryProductMatches(query) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return [];
+  }
+
+  return state.products
+    .map((product) => {
+      const code = String(product.code || "").toLowerCase();
+      const name = String(product.name || "").toLowerCase();
+      let priority = -1;
+
+      if (code === normalized) {
+        priority = 0;
+      } else if (code.startsWith(normalized)) {
+        priority = 1;
+      } else if (name.startsWith(normalized)) {
+        priority = 2;
+      } else if (name.includes(normalized)) {
+        priority = 3;
+      }
+
+      return priority >= 0 ? { product, priority } : null;
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.priority - right.priority || String(left.product.name).localeCompare(String(right.product.name)))
+    .slice(0, 3)
+    .map((entry) => entry.product);
+}
+
+function setSelectedInventoryProduct(product) {
+  state.selectedInventoryCode = Number(product?.code || 0);
+  state.inventoryProductMatches = [];
+  byId("inventoryProductSelect").value = state.selectedInventoryCode ? String(state.selectedInventoryCode) : "";
+  byId("inventoryProductSearch").value = inventoryProductLabel(product);
+  renderInventory();
+}
+
+function refreshInventoryProductSearch() {
+  const query = byId("inventoryProductSearch").value.trim();
+  const selected = getProduct(state.selectedInventoryCode);
+
+  if (!query) {
+    state.selectedInventoryCode = 0;
+    state.inventoryProductMatches = [];
+    byId("inventoryProductSelect").value = "";
+    renderInventory();
+    return;
+  }
+
+  if (selected && query === inventoryProductLabel(selected)) {
+    state.inventoryProductMatches = [];
+    renderInventory();
+    return;
+  }
+
+  state.selectedInventoryCode = 0;
+  byId("inventoryProductSelect").value = "";
+  state.inventoryProductMatches = findInventoryProductMatches(query);
+  renderInventory();
+}
+
 function renderSales() {
   fillSalesSelects();
+  renderSaleClientLookup();
   const total = getCartTotal();
   const method = paymentName();
-  const selectedClient = getClient(Number(byId("customerSelect").value));
+  const selectedClient = state.selectedSaleClient || getClient(Number(byId("customerSelect").value));
   const creditBlocked = method === "Credito" && selectedClient && !selectedClient.creditEnabled;
   const received = method === "Efectivo" ? Number(byId("cashInput").value || 0) : total;
   const change = method === "Efectivo" ? Math.max(received - total, 0) : 0;
@@ -1042,7 +1281,6 @@ function renderSales() {
 async function loadSales() {
   const data = await api("/ventas");
   state.products = data.products;
-  state.clients = data.clients;
   state.methods = data.methods;
   state.lastInvoiceId = data.lastInvoiceId;
   renderSales();
@@ -1098,6 +1336,8 @@ function addProductToCart(rawQuery, rawQuantity) {
 
 function clearSale() {
   state.cart = [];
+  byId("saleCode").value = "";
+  byId("saleQty").value = "1";
   byId("cashInput").value = "";
   byId("paymentMethod").value = "";
   saveCart();
@@ -1136,61 +1376,22 @@ async function checkout() {
     }
   });
 
-  state.cart = [];
-  saveCart();
-  showToast(`Factura FAC-${result.invoiceId} creada.`);
-  window.setTimeout(() => {
-    window.location.href = `./facturas.html?id=${result.invoiceId}`;
-  }, 450);
-}
-
-function resetQuickClientForm() {
-  const form = byId("quickClientForm");
-  if (!form) {
-    return;
-  }
-  form.reset();
-}
-
-function toggleQuickClientForm(forceOpen) {
-  const form = byId("quickClientForm");
-  const button = byId("toggleQuickClientButton");
-  if (!form || !button) {
-    return;
-  }
-
-  const open = typeof forceOpen === "boolean" ? forceOpen : form.classList.contains("hidden");
-  form.classList.toggle("hidden", !open);
-  button.textContent = open ? "Ocultar formulario de cliente" : "Agregar nuevo cliente";
-
-  if (!open) {
-    resetQuickClientForm();
-    return;
-  }
-
-  byId("quickClientName").focus();
-}
-
-async function createClientFromQuickForm() {
-  const payload = {
-    name: byId("quickClientName").value.trim(),
-    document: byId("quickClientDocument").value.trim(),
-    phone: byId("quickClientPhone").value.trim(),
-    address: byId("quickClientAddress").value.trim(),
-    creditEnabled: byId("quickClientCredit").checked
-  };
-
-  if (!payload.name || !payload.document) {
-    showToast("Completa nombre y documento del cliente.", "error");
-    return;
-  }
-
-  const result = await createClient(payload);
+  state.lastInvoiceId = Number(result.invoiceId || state.lastInvoiceId || 0);
+  clearSale();
   await loadSales();
-  byId("customerSelect").value = String(result.clientId);
-  renderSales();
-  toggleQuickClientForm(false);
-  showToast(result.message || "Cliente guardado.");
+  showToast(`Factura FAC-${result.invoiceId} creada.`);
+}
+
+function redirectToClientCreate() {
+  const params = new URLSearchParams();
+  params.set("openCreate", "1");
+
+  const typedDocument = byId("customerSearch")?.value.trim() || "";
+  if (typedDocument) {
+    params.set("document", typedDocument);
+  }
+
+  window.location.href = `./clientes.html?${params.toString()}`;
 }
 
 function attachSalesEvents() {
@@ -1222,21 +1423,28 @@ function attachSalesEvents() {
     renderSales();
   });
 
-  byId("customerSelect").addEventListener("change", renderSales);
+  byId("customerSearch").addEventListener("input", scheduleSaleClientSearch);
+  byId("customerMatches").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-sale-client-pick]");
+    if (!button) {
+      return;
+    }
+    const client = state.saleClientMatches.find((item) => String(item.id) === String(button.dataset.saleClientPick));
+    if (!client) {
+      return;
+    }
+    setSelectedSaleClient(client);
+    renderSales();
+  });
   byId("paymentMethod").addEventListener("change", () => {
-    const client = getClient(Number(byId("customerSelect").value));
+    const client = state.selectedSaleClient || getClient(Number(byId("customerSelect").value));
     if (paymentName() === "Credito" && client && !client.creditEnabled) {
       showToast("Este cliente no tiene credito habilitado.", "error");
     }
     renderSales();
   });
   byId("cashInput").addEventListener("input", renderSales);
-  byId("toggleQuickClientButton").addEventListener("click", () => toggleQuickClientForm());
-  byId("quickClientForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    createClientFromQuickForm().catch((error) => showToast(error.message, "error"));
-  });
-  byId("cancelQuickClientButton").addEventListener("click", () => toggleQuickClientForm(false));
+  byId("toggleQuickClientButton").addEventListener("click", redirectToClientCreate);
   byId("checkoutButton").addEventListener("click", () => checkout().catch((error) => showToast(error.message, "error")));
   byId("cancelSaleButton").addEventListener("click", () => {
     clearSale();
@@ -1286,7 +1494,18 @@ function attachClientsEvents() {
 }
 
 function attachInventoryEvents() {
-  byId("inventoryProductSelect").addEventListener("change", renderInventory);
+  byId("inventoryProductSearch").addEventListener("input", refreshInventoryProductSearch);
+  byId("inventoryProductMatches").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-inventory-product-pick]");
+    if (!button) {
+      return;
+    }
+    const product = state.products.find((item) => String(item.code) === String(button.dataset.inventoryProductPick));
+    if (!product) {
+      return;
+    }
+    setSelectedInventoryProduct(product);
+  });
   byId("inventoryForm").addEventListener("submit", (event) => {
     event.preventDefault();
     updateInventory().catch((error) => showToast(error.message, "error"));
@@ -1541,6 +1760,7 @@ async function initWorkspace() {
   if (page === "clientes") {
     attachClientsEvents();
     await loadClients();
+    applyClientRouteState();
   }
 
   if (page === "inventario") {

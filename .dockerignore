@@ -1,0 +1,5 @@
+.git
+.gitignore
+aa1-web/server-out
+aa1-web/java-test/*.class
+aa1-web/.DS_Store

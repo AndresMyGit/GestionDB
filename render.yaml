@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: gestiondb
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: GESTIONDB_DB_USER
+        sync: false
+      - key: GESTIONDB_DB_PASSWORD
+        sync: false
+      - key: GESTIONDB_TNS_ALIAS
+        value: gestiondb2_high
+      - key: GESTIONDB_TNS_ADMIN
+        value: /app/aa1-web/wallet

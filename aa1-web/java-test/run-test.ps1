@@ -1,21 +1,30 @@
 $ErrorActionPreference = "Stop"
 
-$ErrorActionPreference = "Stop"
-
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Ojdbc = Join-Path $ProjectRoot "..\lib\ojdbc11.jar"
+$LibDir = Join-Path $ProjectRoot "..\lib"
 
-if (-not (Test-Path $Ojdbc)) {
-    throw "No se encontró el jar de Oracle en lib\ojdbc11.jar. Copia ojdbc11.jar a aa1-web\lib o define GESTIONDB_OJDBC."
+if (-not (Test-Path $LibDir)) {
+    throw "No se encontro la carpeta lib con los jars de Oracle."
+}
+
+$JarFiles = Get-ChildItem $LibDir -Filter *.jar | Where-Object { $_.Name -notmatch "Javadoc" }
+if (-not $JarFiles) {
+    throw "No encontre jars de ejecucion en lib."
+}
+
+$CompileJar = Join-Path $LibDir "ojdbc11.jar"
+if (-not (Test-Path $CompileJar)) {
+    $CompileJar = ($JarFiles | Select-Object -First 1).FullName
 }
 
 $RootDir = Join-Path $ProjectRoot ".."
 Push-Location $RootDir
 try {
+    $RuntimeClasspath = ($JarFiles | ForEach-Object { $_.FullName }) -join ";"
     Write-Host "Compilando TestConexion.java..."
-    javac -cp "$Ojdbc" -d java-test java-test\TestConexion.java
+    javac -cp $CompileJar -d java-test java-test\TestConexion.java
     Write-Host "Ejecutando TestConexion..."
-    java -cp "java-test;$Ojdbc" TestConexion
+    java -cp "java-test;$RuntimeClasspath" TestConexion
 }
 finally {
     Pop-Location

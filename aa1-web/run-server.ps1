@@ -1,26 +1,20 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Ojdbc = $env:GESTIONDB_OJDBC
+$LibDir = Join-Path $ProjectRoot "lib"
 
-if ([string]::IsNullOrWhiteSpace($Ojdbc)) {
-    $Candidates = @(
-        "C:\app\dg359\product\23ai\dbhomeFree\jdbc\lib\ojdbc17.jar",
-        "C:\app\dg359\product\23ai\dbhomeFree\jdbc\lib\ojdbc11.jar",
-        "C:\app\dg359\product\23ai\dbhomeFree\jdbc\lib\ojdbc8.jar"
-    )
-    $Ojdbc = $Candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not (Test-Path $LibDir)) {
+    throw "No encontre la carpeta lib con los jars de Oracle."
 }
 
-if ([string]::IsNullOrWhiteSpace($Ojdbc) -or -not (Test-Path $Ojdbc)) {
-    $LocalOjdbc = Join-Path $ProjectRoot "lib\ojdbc11.jar"
-    if (Test-Path $LocalOjdbc) {
-        $Ojdbc = $LocalOjdbc
-    }
+$JarFiles = Get-ChildItem $LibDir -Filter *.jar | Where-Object { $_.Name -notmatch "Javadoc" }
+if (-not $JarFiles) {
+    throw "No encontre jars de ejecucion en lib."
 }
 
-if ([string]::IsNullOrWhiteSpace($Ojdbc) -or -not (Test-Path $Ojdbc)) {
-    throw "No encontre ojdbc. Define GESTIONDB_OJDBC con la ruta del jar ojdbc o coloca ojdbc11.jar en lib."
+$CompileJar = Join-Path $LibDir "ojdbc11.jar"
+if (-not (Test-Path $CompileJar)) {
+    $CompileJar = ($JarFiles | Select-Object -First 1).FullName
 }
 
 $OutDir = Join-Path $ProjectRoot "server-out"
@@ -30,8 +24,12 @@ if (-not (Test-Path $OutDir)) {
 
 Push-Location $ProjectRoot
 try {
-    javac -cp $Ojdbc -d $OutDir .\backend\*.java
-    java -cp "$OutDir;$Ojdbc" GestionDBServer
+    $RuntimeClasspath = ($JarFiles | ForEach-Object { $_.FullName }) -join ";"
+    javac -cp $CompileJar -d $OutDir .\backend\*.java
+    if (-not $env:PORT -and -not $env:GESTIONDB_PORT) {
+        $env:GESTIONDB_PORT = "8081"
+    }
+    java -cp "$OutDir;$RuntimeClasspath" GestionDBServer
 }
 finally {
     Pop-Location

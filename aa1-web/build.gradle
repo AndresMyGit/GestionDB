@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'backend'
+        }
+        resources {
+            srcDir 'wallet'
+            srcDir '.'
+            exclude 'backend/**'
+            exclude 'build/**'
+            exclude 'java-test/**'
+            exclude 'lib/**'
+            exclude 'server-out/**'
+            exclude '*.ps1'
+            exclude '*.md'
+            exclude 'build.gradle'
+            exclude 'gradlew*'
+            exclude '.gradle/**'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'GestionDBServer'
+    }
+}
+
+shadowJar {
+    archiveBaseName.set('gestion')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+}

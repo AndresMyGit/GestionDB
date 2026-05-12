@@ -3,7 +3,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public final class Conexion {
-    private static final String DEFAULT_URL = "jdbc:oracle:thin:@gestiondb2_high?TNS_ADMIN=./wallet";
+    private static final String DEFAULT_URL = "jdbc:oracle:thin:@gestiondb2_high";
     private static final String DEFAULT_USER = "ADMIN";
     private static final String DEFAULT_PASSWORD = "DS1405gg2005?";
 

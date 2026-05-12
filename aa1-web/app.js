@@ -40,6 +40,9 @@ const state = {
   products: [],
   categories: [],
   clients: [],
+  saleClientMatches: [],
+  selectedSaleClient: null,
+  saleClientSearchLoading: false,
   methods: [],
   credits: [],
   payments: [],
@@ -227,7 +230,13 @@ function getProduct(code) {
 }
 
 function getClient(id) {
-  return state.clients.find((client) => Number(client.id) === Number(id));
+  const clientId = Number(id);
+  if (!clientId) {
+    return null;
+  }
+  return state.clients.find((client) => Number(client.id) === clientId)
+    || state.saleClientMatches.find((client) => Number(client.id) === clientId)
+    || (Number(state.selectedSaleClient?.id) === clientId ? state.selectedSaleClient : null);
 }
 
 function getCartTotal() {
@@ -531,6 +540,28 @@ function loadSelectedClientIntoForm() {
   byId("saveClientButton").textContent = "Actualizar cliente";
 }
 
+function applyClientRouteState() {
+  if (page !== "clientes") {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("openCreate") !== "1") {
+    return;
+  }
+
+  const document = params.get("document") || "";
+  toggleClientForm(true);
+  resetClientForm();
+  byId("clientFormDocument").value = document;
+
+  if (document) {
+    byId("clientFormName").focus();
+  } else {
+    byId("clientFormDocument").focus();
+  }
+}
+
 async function saveClientFromForm() {
   const clientId = Number(byId("clientFormId").value || 0);
   const payload = {
@@ -542,8 +573,10 @@ async function saveClientFromForm() {
     creditEnabled: byId("clientFormCredit").checked
   };
 
-  if (!payload.name || !payload.document) {
-    showToast("Completa nombre y documento del cliente.", "error");
+  if (!payload.document || (clientId && !payload.name)) {
+    showToast(clientId
+      ? "Completa nombre y documento del cliente."
+      : "Completa al menos el documento del cliente.", "error");
     return;
   }
 
@@ -951,29 +984,10 @@ async function loadCuts() {
 }
 
 function fillSalesSelects() {
-  const clientSelect = byId("customerSelect");
-  if (!clientSelect) {
+  const methodSelect = byId("paymentMethod");
+  if (!methodSelect) {
     return;
   }
-
-  if (!state.clients.length) {
-    clientSelect.innerHTML = '<option value="">Sin clientes registrados</option>';
-    clientSelect.value = "";
-    clientSelect.disabled = true;
-  } else {
-    const currentClient = clientSelect.value || String(state.clients[0]?.id || "");
-    clientSelect.disabled = false;
-    clientSelect.innerHTML = state.clients
-      .map(
-        (client) => `<option value="${client.id}">${escapeHtml(client.name)} - ${escapeHtml(client.document)}</option>`
-      )
-      .join("");
-    clientSelect.value = state.clients.some((client) => String(client.id) === String(currentClient))
-      ? currentClient
-      : String(state.clients[0]?.id || "");
-  }
-
-  const methodSelect = byId("paymentMethod");
   const currentMethod = methodSelect.value;
   methodSelect.innerHTML = '<option value="">Seleccionar</option>' +
     state.methods
@@ -982,11 +996,144 @@ function fillSalesSelects() {
   methodSelect.value = currentMethod;
 }
 
+function normalizeSaleClient(client) {
+  if (!client) {
+    return null;
+  }
+  return {
+    id: Number(client.id || 0),
+    name: client.name || "",
+    document: client.document || "",
+    phone: client.phone || "",
+    address: client.address || "",
+    creditEnabled: Boolean(client.creditEnabled),
+    debt: Number(client.debt || 0)
+  };
+}
+
+function setSelectedSaleClient(client) {
+  state.selectedSaleClient = normalizeSaleClient(client);
+  state.saleClientMatches = [];
+  state.saleClientSearchLoading = false;
+  byId("customerSelect").value = state.selectedSaleClient ? String(state.selectedSaleClient.id) : "";
+  byId("customerSearch").value = state.selectedSaleClient ? state.selectedSaleClient.document : "";
+}
+
+function clearSelectedSaleClient(keepQuery = true) {
+  state.selectedSaleClient = null;
+  byId("customerSelect").value = "";
+  if (!keepQuery) {
+    byId("customerSearch").value = "";
+  }
+}
+
+function renderSaleClientLookup() {
+  const summary = byId("selectedCustomerSummary");
+  const matches = byId("customerMatches");
+  if (!summary || !matches) {
+    return;
+  }
+
+  const selected = state.selectedSaleClient;
+  summary.innerHTML = selected
+    ? `
+        <div class="stack-item">
+          <div>
+            <strong>${escapeHtml(selected.name || "Cliente seleccionado")}</strong>
+            <span class="subtle">${escapeHtml(selected.document)} - ${selected.creditEnabled ? "Credito habilitado" : "Credito bloqueado"}</span>
+          </div>
+          <strong>${formatMoney(selected.debt)}</strong>
+        </div>
+      `
+    : '<div class="stack-item"><strong>Busca un cliente por documento para continuar.</strong></div>';
+
+  const query = byId("customerSearch").value.trim();
+  if (!query) {
+    matches.innerHTML = "";
+    return;
+  }
+
+  if (query.length < 2) {
+    matches.innerHTML = '<div class="stack-item"><strong>Escribe al menos 2 caracteres del documento.</strong></div>';
+    return;
+  }
+
+  if (state.saleClientSearchLoading) {
+    matches.innerHTML = '<div class="stack-item"><strong>Buscando clientes...</strong></div>';
+    return;
+  }
+
+  if (selected && query === selected.document && !state.saleClientMatches.length) {
+    matches.innerHTML = "";
+    return;
+  }
+
+  matches.innerHTML = state.saleClientMatches.length
+    ? state.saleClientMatches
+        .map(
+          (client) => `
+            <button class="client-item" type="button" data-sale-client-pick="${client.id}">
+              <strong>${escapeHtml(client.name)}</strong>
+              <span class="subtle">${escapeHtml(client.document)} - ${client.creditEnabled ? "Credito habilitado" : "Credito bloqueado"}</span>
+            </button>
+          `
+        )
+        .join("")
+    : '<div class="stack-item"><strong>No hay clientes para esa busqueda.</strong></div>';
+}
+
+async function searchSaleClients(query, requestId) {
+  const data = await api(`/clientes?search=${encodeURIComponent(query)}&limit=8`);
+  if (requestId !== searchSaleClients.requestId) {
+    return;
+  }
+
+  state.saleClientMatches = data.clients || [];
+  state.saleClientSearchLoading = false;
+  renderSales();
+}
+
+function scheduleSaleClientSearch() {
+  const query = byId("customerSearch").value.trim();
+  window.clearTimeout(scheduleSaleClientSearch.timer);
+  searchSaleClients.requestId = (searchSaleClients.requestId || 0) + 1;
+  const requestId = searchSaleClients.requestId;
+
+  clearSelectedSaleClient(true);
+  state.saleClientMatches = [];
+  state.saleClientSearchLoading = false;
+
+  if (!query) {
+    renderSales();
+    return;
+  }
+
+  if (query.length < 2) {
+    renderSales();
+    return;
+  }
+
+  state.saleClientSearchLoading = true;
+  renderSales();
+
+  scheduleSaleClientSearch.timer = window.setTimeout(() => {
+    searchSaleClients(query, requestId).catch((error) => {
+      if (requestId === searchSaleClients.requestId && query === byId("customerSearch").value.trim()) {
+        state.saleClientSearchLoading = false;
+        state.saleClientMatches = [];
+        renderSales();
+      }
+      showToast(error.message, "error");
+    });
+  }, 220);
+}
+
 function renderSales() {
   fillSalesSelects();
+  renderSaleClientLookup();
   const total = getCartTotal();
   const method = paymentName();
-  const selectedClient = getClient(Number(byId("customerSelect").value));
+  const selectedClient = state.selectedSaleClient || getClient(Number(byId("customerSelect").value));
   const creditBlocked = method === "Credito" && selectedClient && !selectedClient.creditEnabled;
   const received = method === "Efectivo" ? Number(byId("cashInput").value || 0) : total;
   const change = method === "Efectivo" ? Math.max(received - total, 0) : 0;
@@ -1042,7 +1189,6 @@ function renderSales() {
 async function loadSales() {
   const data = await api("/ventas");
   state.products = data.products;
-  state.clients = data.clients;
   state.methods = data.methods;
   state.lastInvoiceId = data.lastInvoiceId;
   renderSales();
@@ -1144,53 +1290,16 @@ async function checkout() {
   showToast(`Factura FAC-${result.invoiceId} creada.`);
 }
 
-function resetQuickClientForm() {
-  const form = byId("quickClientForm");
-  if (!form) {
-    return;
-  }
-  form.reset();
-}
+function redirectToClientCreate() {
+  const params = new URLSearchParams();
+  params.set("openCreate", "1");
 
-function toggleQuickClientForm(forceOpen) {
-  const form = byId("quickClientForm");
-  const button = byId("toggleQuickClientButton");
-  if (!form || !button) {
-    return;
+  const typedDocument = byId("customerSearch")?.value.trim() || "";
+  if (typedDocument) {
+    params.set("document", typedDocument);
   }
 
-  const open = typeof forceOpen === "boolean" ? forceOpen : form.classList.contains("hidden");
-  form.classList.toggle("hidden", !open);
-  button.textContent = open ? "Ocultar formulario de cliente" : "Agregar nuevo cliente";
-
-  if (!open) {
-    resetQuickClientForm();
-    return;
-  }
-
-  byId("quickClientName").focus();
-}
-
-async function createClientFromQuickForm() {
-  const payload = {
-    name: byId("quickClientName").value.trim(),
-    document: byId("quickClientDocument").value.trim(),
-    phone: byId("quickClientPhone").value.trim(),
-    address: byId("quickClientAddress").value.trim(),
-    creditEnabled: byId("quickClientCredit").checked
-  };
-
-  if (!payload.name || !payload.document) {
-    showToast("Completa nombre y documento del cliente.", "error");
-    return;
-  }
-
-  const result = await createClient(payload);
-  await loadSales();
-  byId("customerSelect").value = String(result.clientId);
-  renderSales();
-  toggleQuickClientForm(false);
-  showToast(result.message || "Cliente guardado.");
+  window.location.href = `./clientes.html?${params.toString()}`;
 }
 
 function attachSalesEvents() {
@@ -1222,21 +1331,28 @@ function attachSalesEvents() {
     renderSales();
   });
 
-  byId("customerSelect").addEventListener("change", renderSales);
+  byId("customerSearch").addEventListener("input", scheduleSaleClientSearch);
+  byId("customerMatches").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-sale-client-pick]");
+    if (!button) {
+      return;
+    }
+    const client = state.saleClientMatches.find((item) => String(item.id) === String(button.dataset.saleClientPick));
+    if (!client) {
+      return;
+    }
+    setSelectedSaleClient(client);
+    renderSales();
+  });
   byId("paymentMethod").addEventListener("change", () => {
-    const client = getClient(Number(byId("customerSelect").value));
+    const client = state.selectedSaleClient || getClient(Number(byId("customerSelect").value));
     if (paymentName() === "Credito" && client && !client.creditEnabled) {
       showToast("Este cliente no tiene credito habilitado.", "error");
     }
     renderSales();
   });
   byId("cashInput").addEventListener("input", renderSales);
-  byId("toggleQuickClientButton").addEventListener("click", () => toggleQuickClientForm());
-  byId("quickClientForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    createClientFromQuickForm().catch((error) => showToast(error.message, "error"));
-  });
-  byId("cancelQuickClientButton").addEventListener("click", () => toggleQuickClientForm(false));
+  byId("toggleQuickClientButton").addEventListener("click", redirectToClientCreate);
   byId("checkoutButton").addEventListener("click", () => checkout().catch((error) => showToast(error.message, "error")));
   byId("cancelSaleButton").addEventListener("click", () => {
     clearSale();
@@ -1541,6 +1657,7 @@ async function initWorkspace() {
   if (page === "clientes") {
     attachClientsEvents();
     await loadClients();
+    applyClientRouteState();
   }
 
   if (page === "inventario") {

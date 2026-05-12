@@ -132,42 +132,21 @@
               </div>
 
               <label class="field">
-                <span>Cliente</span>
-                <select id="customerSelect"></select>
+                <span>Documento del cliente</span>
+                <input id="customerSearch" type="text" placeholder="Escribe el documento para buscar">
               </label>
 
-              <button class="ghost-button full" type="button" id="toggleQuickClientButton">Agregar nuevo cliente</button>
+              <input id="customerSelect" type="hidden">
 
-              <form class="quick-client-form hidden" id="quickClientForm">
-                <div class="form-grid">
-                  <label class="field">
-                    <span>Nombre</span>
-                    <input id="quickClientName" type="text" placeholder="Cliente frecuente">
-                  </label>
-                  <label class="field">
-                    <span>Documento</span>
-                    <input id="quickClientDocument" type="text" placeholder="1023456789">
-                  </label>
-                  <label class="field">
-                    <span>Telefono</span>
-                    <input id="quickClientPhone" type="text" placeholder="3001234567">
-                  </label>
-                  <label class="field">
-                    <span>Direccion</span>
-                    <input id="quickClientAddress" type="text" placeholder="Barrio o direccion">
-                  </label>
+              <div class="stack-list" id="selectedCustomerSummary">
+                <div class="stack-item">
+                  <strong>Busca un cliente por documento para continuar.</strong>
                 </div>
+              </div>
 
-                <label class="quick-client-toggle">
-                  <input id="quickClientCredit" type="checkbox">
-                  <span>Habilitar credito para este cliente</span>
-                </label>
+              <div class="stack-list" id="customerMatches"></div>
 
-                <div class="button-row">
-                  <button class="primary-button" type="submit">Guardar cliente</button>
-                  <button class="ghost-button" type="button" id="cancelQuickClientButton">Cancelar</button>
-                </div>
-              </form>
+              <button class="ghost-button full" type="button" id="toggleQuickClientButton">Ir a clientes para agregar</button>
 
               <label class="field">
                 <span>Metodo de pago</span>

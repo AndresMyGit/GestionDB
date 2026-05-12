@@ -1098,6 +1098,8 @@ function addProductToCart(rawQuery, rawQuantity) {
 
 function clearSale() {
   state.cart = [];
+  byId("saleCode").value = "";
+  byId("saleQty").value = "1";
   byId("cashInput").value = "";
   byId("paymentMethod").value = "";
   saveCart();
@@ -1136,12 +1138,10 @@ async function checkout() {
     }
   });
 
-  state.cart = [];
-  saveCart();
+  state.lastInvoiceId = Number(result.invoiceId || state.lastInvoiceId || 0);
+  clearSale();
+  await loadSales();
   showToast(`Factura FAC-${result.invoiceId} creada.`);
-  window.setTimeout(() => {
-    window.location.href = `./facturas.html?id=${result.invoiceId}`;
-  }, 450);
 }
 
 function resetQuickClientForm() {

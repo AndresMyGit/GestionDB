@@ -17,7 +17,8 @@ public class GestionDBServer {
             Map.entry(".svg", "image/svg+xml"));
 
     public static void main(String[] args) throws Exception {
-        int port = Integer.parseInt(System.getenv().getOrDefault("GESTIONDB_PORT", "8081"));
+        String portValue = System.getenv().getOrDefault("PORT", System.getenv().getOrDefault("GESTIONDB_PORT", "8081"));
+        int port = Integer.parseInt(portValue);
         
         // Extract Oracle wallet to temp directory
         String[] walletFiles = {"cwallet.sso", "ewallet.p12", "ewallet.pem", "keystore.jks", "ojdbc.properties", "sqlnet.ora", "tnsnames.ora", "truststore.jks"};

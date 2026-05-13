@@ -1,9 +1,11 @@
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,11 +17,22 @@ public class Facturas implements HttpHandler {
         if (Api.options(exchange)) {
             return;
         }
-        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+        try {
+            if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                get(exchange);
+                return;
+            }
+            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                post(exchange);
+                return;
+            }
             Api.error(exchange, 405, "Metodo no permitido");
-            return;
+        } catch (Exception exception) {
+            Api.error(exchange, 500, "Error en facturas: " + exception.getMessage());
         }
+    }
 
+    private void get(HttpExchange exchange) throws Exception {
         try (Connection connection = Conexion.getConnection()) {
             int month = parse(Api.query(exchange, "month"), 0);
             int year = parse(Api.query(exchange, "year"), 0);
@@ -71,8 +84,43 @@ public class Facturas implements HttpHandler {
             response.put("invoices", invoices);
             response.put("detail", selectedId > 0 ? detail(connection, selectedId) : null);
             Api.ok(exchange, response);
-        } catch (Exception exception) {
-            Api.error(exchange, 500, "Error en facturas: " + exception.getMessage());
+        }
+    }
+
+    private void post(HttpExchange exchange) throws Exception {
+        Map<String, Object> body = Api.readJsonObject(exchange);
+        String action = Api.str(body, "action");
+        if (!"annul".equalsIgnoreCase(action)) {
+            Api.error(exchange, 400, "Accion de factura no soportada");
+            return;
+        }
+
+        int invoiceId = Api.integer(body, "invoiceId", 0);
+        if (invoiceId <= 0) {
+            Api.error(exchange, 400, "Factura invalida");
+            return;
+        }
+
+        try (Connection connection = Conexion.getConnection()) {
+            if (!Api.requireManager(exchange, connection)) {
+                return;
+            }
+
+            try (CallableStatement statement = connection.prepareCall("{ call anular_factura(?, ?) }")) {
+                statement.setInt(1, invoiceId);
+                statement.registerOutParameter(2, Types.VARCHAR);
+                statement.execute();
+                String message = statement.getString(2);
+                if (message != null && message.startsWith("Error")) {
+                    Api.error(exchange, 400, message);
+                    return;
+                }
+
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("message", message == null || message.isBlank() ? "Factura anulada" : message);
+                response.put("invoiceId", invoiceId);
+                Api.ok(exchange, response);
+            }
         }
     }
 

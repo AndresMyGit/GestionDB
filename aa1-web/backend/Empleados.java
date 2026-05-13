@@ -1,11 +1,10 @@
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -97,38 +96,30 @@ public class Empleados implements HttpHandler {
 
         connection.setAutoCommit(false);
         try {
-            if (documentExists(connection, document)) {
+            String message;
+            try (CallableStatement statement = connection.prepareCall(
+                    "{ ? = call insertar_empleado(?, ?, ?, ?, ?, ?) }")) {
+                statement.registerOutParameter(1, Types.VARCHAR);
+                statement.setString(2, name);
+                statement.setString(3, document);
+                statement.setString(4, phone);
+                statement.setString(5, password);
+                statement.setDouble(6, salary);
+                statement.setInt(7, roleId);
+                statement.execute();
+                message = statement.getString(1);
+            }
+
+            if (message != null && message.startsWith("Error")) {
                 connection.rollback();
-                Api.error(exchange, 400, "Ya existe una persona con ese documento");
+                Api.error(exchange, 400, message);
                 return;
             }
 
-            int employeeId = nextPersonId(connection);
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO persona (id, nombre, documento, telefono) VALUES (?, ?, ?, ?)")) {
-                statement.setInt(1, employeeId);
-                statement.setString(2, name);
-                statement.setString(3, document);
-                if (phone.isBlank()) {
-                    statement.setNull(4, Types.VARCHAR);
-                } else {
-                    statement.setString(4, phone);
-                }
-                statement.executeUpdate();
-            }
-
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO empleado (id, contrasena, salario, id_cargo, estado) VALUES (?, ?, ?, ?, 1)")) {
-                statement.setInt(1, employeeId);
-                statement.setString(2, password);
-                statement.setDouble(3, salary);
-                statement.setInt(4, roleId);
-                statement.executeUpdate();
-            }
-
+            int employeeId = employeeIdByDocument(connection, document);
             connection.commit();
             Map<String, Object> response = new LinkedHashMap<>();
-            response.put("message", "Empleado creado");
+            response.put("message", message == null || message.isBlank() ? "Empleado creado" : message);
             response.put("employeeId", employeeId);
             Api.ok(exchange, response);
         } catch (Exception exception) {
@@ -163,39 +154,13 @@ public class Empleados implements HttpHandler {
         Api.ok(exchange, response);
     }
 
-    private boolean documentExists(Connection connection, String document) throws Exception {
+    private int employeeIdByDocument(Connection connection, String document) throws Exception {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT COUNT(*) FROM persona WHERE documento = ?")) {
+                "SELECT id FROM persona WHERE documento = ?")) {
             statement.setString(1, document);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() && resultSet.getInt(1) > 0;
+                return resultSet.next() ? resultSet.getInt("id") : 0;
             }
-        }
-    }
-
-    private int nextPersonId(Connection connection) throws Exception {
-        String[] sequences = {
-                "persona_id_seq",
-                "persona_seq",
-                "persona_idpersona_seq"
-        };
-
-        for (String sequence : sequences) {
-            try {
-                return nextValue(connection, sequence);
-            } catch (SQLException ignored) {
-                // Usa la primera secuencia existente; si no hay, cae al calculo por maximo.
-            }
-        }
-
-        return Api.scalarInt(connection, "SELECT NVL(MAX(id), 0) + 1 FROM persona");
-    }
-
-    private int nextValue(Connection connection, String sequence) throws Exception {
-        try (Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT " + sequence + ".NEXTVAL FROM dual")) {
-            resultSet.next();
-            return resultSet.getInt(1);
         }
     }
 }

@@ -20,25 +20,25 @@ public class Resumen implements HttpHandler {
         try (Connection connection = Conexion.getConnection()) {
             double salesToday = Api.scalarDouble(
                     connection,
-                    "SELECT NVL(SUM(total), 0) FROM factura WHERE TRUNC(fecha) = TRUNC(SYSDATE)");
+                    "SELECT NVL(SUM(total), 0) FROM vw_facturas_detalle WHERE TRUNC(fecha) = TRUNC(SYSDATE)");
             double totalDebt = Api.scalarDouble(
                     connection,
-                    "SELECT NVL(SUM(saldo), 0) FROM credito WHERE estado <> 2");
+                    "SELECT NVL(SUM(saldo), 0) FROM vista_creditos_resumida WHERE UPPER(estado_credito) <> 'PAGADO'");
             int lowStockCount = Api.scalarInt(
                     connection,
-                    "SELECT COUNT(*) FROM producto WHERE stock < 10");
+                    "SELECT COUNT(*) FROM producto p JOIN vista_productos vp ON vp.codigo = p.codigobarras WHERE p.stock < 10");
             int invoiceCount = Api.scalarInt(
                     connection,
-                    "SELECT COUNT(*) FROM factura");
+                    "SELECT COUNT(*) FROM vw_facturas_detalle");
 
             List<Map<String, Object>> lowStock = Api.rows(
                     connection,
                     """
-                    SELECT p.codigobarras, p.nombre, c.nombre AS categoria, p.stock
+                    SELECT p.codigobarras, vp.nombre, vp.categoria, p.stock
                       FROM producto p
-                      LEFT JOIN categoria c ON c.idcategoria = p.idcategoria
+                      JOIN vista_productos vp ON vp.codigo = p.codigobarras
                      WHERE p.stock < 10
-                     ORDER BY p.stock ASC, p.nombre
+                     ORDER BY p.stock ASC, vp.nombre
                      FETCH FIRST 8 ROWS ONLY
                     """,
                     null,

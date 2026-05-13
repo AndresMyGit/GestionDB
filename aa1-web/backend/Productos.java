@@ -1,9 +1,11 @@
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,13 +48,7 @@ public class Productos implements HttpHandler {
 
             List<Map<String, Object>> products = Api.rows(
                     connection,
-                    """
-                    SELECT p.codigobarras, p.nombre, p.descripcion, p.precio, p.stock,
-                           c.idcategoria, c.nombre AS categoria
-                      FROM producto p
-                      LEFT JOIN categoria c ON c.idcategoria = p.idcategoria
-                     ORDER BY p.nombre
-                    """,
+                    productSelectSql() + " ORDER BY vp.nombre",
                     null,
                     resultSet -> productRow(resultSet));
 
@@ -61,7 +57,8 @@ public class Productos implements HttpHandler {
             response.put("products", products);
             response.put("total", products.size());
             response.put("categoryCount", categories.size());
-            response.put("lowStockCount", Api.scalarInt(connection, "SELECT COUNT(*) FROM producto WHERE stock < 10"));
+            response.put("lowStockCount", Api.scalarInt(connection,
+                    "SELECT COUNT(*) FROM producto p JOIN vista_productos vp ON vp.codigo = p.codigobarras WHERE p.stock < 10"));
             Api.ok(exchange, response);
         }
     }
@@ -124,25 +121,58 @@ public class Productos implements HttpHandler {
             return "Error: Completa todos los datos del producto";
         }
 
-        try (PreparedStatement statement = connection.prepareStatement(
-                """
-                UPDATE producto
-                   SET nombre = ?,
-                       idcategoria = ?,
-                       descripcion = ?,
-                       precio = ?,
-                       stock = ?
-                 WHERE codigobarras = ?
-                """)) {
-            statement.setString(1, name);
-            statement.setInt(2, categoryId);
-            statement.setString(3, description);
-            statement.setDouble(4, price);
-            statement.setDouble(5, stock);
-            statement.setInt(6, code);
-            int updated = statement.executeUpdate();
-            return updated == 0 ? "Error: Producto no encontrado" : "Producto actualizado";
+        BigDecimal currentStock = currentStock(connection, code);
+        if (currentStock == null) {
+            return "Error: Producto no encontrado";
         }
+
+        String message;
+        try (CallableStatement statement = connection.prepareCall("{ ? = call actualizar_producto(?, ?, ?, ?, ?) }")) {
+            statement.registerOutParameter(1, Types.VARCHAR);
+            statement.setInt(2, code);
+            statement.setString(3, name);
+            statement.setInt(4, categoryId);
+            statement.setString(5, description);
+            statement.setDouble(6, price);
+            statement.execute();
+            message = statement.getString(1);
+        }
+
+        if (message != null && message.startsWith("Error")) {
+            return message;
+        }
+
+        BigDecimal requestedStock = BigDecimal.valueOf(stock);
+        if (requestedStock.compareTo(currentStock) != 0) {
+            try (CallableStatement statement = connection.prepareCall(
+                    "{ call procesar_movimiento_inventario(?, ?, ?) }")) {
+                statement.setInt(1, code);
+                statement.setBigDecimal(2, requestedStock);
+                statement.setInt(3, 4);
+                statement.execute();
+            }
+        }
+
+        return message == null || message.isBlank() ? "Producto actualizado" : message;
+    }
+
+    private BigDecimal currentStock(Connection connection, int code) throws Exception {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT stock FROM producto WHERE codigobarras = ? FOR UPDATE")) {
+            statement.setInt(1, code);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getBigDecimal("stock") : null;
+            }
+        }
+    }
+
+    static String productSelectSql() {
+        return """
+               SELECT p.codigobarras, vp.nombre, p.descripcion, vp.precio, p.stock,
+                      p.idcategoria, vp.categoria
+                 FROM vista_productos vp
+                 JOIN producto p ON p.codigobarras = vp.codigo
+               """;
     }
 
     static Map<String, Object> productRow(java.sql.ResultSet resultSet) throws java.sql.SQLException {

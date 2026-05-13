@@ -61,6 +61,11 @@ public class Login implements HttpHandler {
                     return;
                 }
 
+                connection.setAutoCommit(false);
+                int overdueUpdated = Api.callActualizarEstadoVencido(connection);
+                connection.commit();
+                employee.put("overdueUpdated", overdueUpdated);
+
                 Api.ok(exchange, employee);
             }
         } catch (Exception exception) {

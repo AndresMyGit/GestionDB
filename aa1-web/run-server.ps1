@@ -12,11 +12,6 @@ if (-not $JarFiles) {
     throw "No encontre jars de ejecucion en lib."
 }
 
-$CompileJar = Join-Path $LibDir "ojdbc11.jar"
-if (-not (Test-Path $CompileJar)) {
-    $CompileJar = ($JarFiles | Select-Object -First 1).FullName
-}
-
 $OutDir = Join-Path $ProjectRoot "server-out"
 if (-not (Test-Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir | Out-Null
@@ -25,7 +20,7 @@ if (-not (Test-Path $OutDir)) {
 Push-Location $ProjectRoot
 try {
     $RuntimeClasspath = ($JarFiles | ForEach-Object { $_.FullName }) -join ";"
-    javac -cp $CompileJar -d $OutDir .\backend\*.java
+    javac -d $OutDir .\backend\*.java
     if (-not $env:PORT -and -not $env:GESTIONDB_PORT) {
         $env:GESTIONDB_PORT = "8081"
     }

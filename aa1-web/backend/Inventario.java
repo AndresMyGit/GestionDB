@@ -35,23 +35,18 @@ public class Inventario implements HttpHandler {
         try (Connection connection = Conexion.getConnection()) {
             List<Map<String, Object>> products = Api.rows(
                     connection,
-                    """
-                    SELECT p.codigobarras, p.nombre, p.descripcion, p.precio, p.stock,
-                           c.idcategoria, c.nombre AS categoria
-                      FROM producto p
-                      LEFT JOIN categoria c ON c.idcategoria = p.idcategoria
-                     ORDER BY p.nombre
-                    """,
+                    Productos.productSelectSql() + " ORDER BY vp.nombre",
                     null,
                     resultSet -> Productos.productRow(resultSet));
 
             List<Map<String, Object>> lowStock = Api.rows(
                     connection,
                     """
-                    SELECT p.codigobarras, p.nombre, p.stock
+                    SELECT p.codigobarras, vp.nombre, p.stock
                       FROM producto p
+                      JOIN vista_productos vp ON vp.codigo = p.codigobarras
                      WHERE p.stock < 10
-                     ORDER BY p.stock ASC, p.nombre
+                     ORDER BY p.stock ASC, vp.nombre
                     """,
                     null,
                     resultSet -> {
@@ -146,17 +141,10 @@ public class Inventario implements HttpHandler {
             throw new IllegalArgumentException("La salida manual supera el stock actual");
         }
 
-        try (PreparedStatement statement = connection.prepareStatement(
-                "UPDATE producto SET stock = stock - ? WHERE codigobarras = ?")) {
-            statement.setDouble(1, amount);
-            statement.setInt(2, code);
-            statement.executeUpdate();
-        }
-
         try (CallableStatement statement = connection.prepareCall(
-                "{ call registrar_movimiento_inventario(?, ?, ?) }")) {
+                "{ call procesar_movimiento_inventario(?, ?, ?) }")) {
             statement.setInt(1, code);
-            statement.setDouble(2, -amount);
+            statement.setDouble(2, stock - amount);
             statement.setInt(3, 4);
             statement.execute();
         }

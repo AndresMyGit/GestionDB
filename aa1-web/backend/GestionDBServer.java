@@ -49,6 +49,7 @@ public class GestionDBServer {
         System.out.println("Oracle URL: " + Conexion.url());
         System.out.println("Oracle usuario: " + mask(Conexion.user()));
         System.out.println("Health check: /api/health");
+        Thread.currentThread().join();
     }
 
     private static void serveStatic(HttpExchange exchange, Path root) throws IOException {

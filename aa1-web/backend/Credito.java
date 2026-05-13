@@ -65,18 +65,18 @@ public class Credito implements HttpHandler {
             List<Map<String, Object>> payments = Api.rows(
                     connection,
                     """
-                    SELECT ac.credito_id,
-                           ac.id AS id_abono_credito,
-                           ac.fecha,
+                    SELECT vac.credito_id,
+                           vac.id_abono_credito,
+                           vac.fecha,
                            cr.cliente AS id_cliente,
                            cr.factura AS id_factura,
                            p.documento,
-                           p.nombre AS nombre_cliente,
-                           ac.monto
-                      FROM abono_credito ac
-                      JOIN credito cr ON cr.id = ac.credito_id
+                           vac.nombre_cliente,
+                           vac.monto
+                      FROM vista_abono_credito vac
+                      JOIN credito cr ON cr.id = vac.credito_id
                       JOIN persona p ON p.id = cr.cliente
-                     ORDER BY ac.fecha DESC, ac.id DESC
+                     ORDER BY vac.fecha DESC, vac.id_abono_credito DESC
                      FETCH FIRST 100 ROWS ONLY
                     """,
                     null,
@@ -97,8 +97,10 @@ public class Credito implements HttpHandler {
             response.put("credits", credits);
             response.put("payments", payments);
             response.put("overdueUpdated", overdueUpdated);
-            response.put("totalDebt", Api.scalarDouble(connection, "SELECT NVL(SUM(saldo), 0) FROM credito WHERE estado <> 2"));
-            response.put("clientCount", Api.scalarInt(connection, "SELECT COUNT(DISTINCT cliente) FROM credito WHERE saldo > 0"));
+            response.put("totalDebt", Api.scalarDouble(connection,
+                    "SELECT NVL(SUM(saldo), 0) FROM vista_creditos_resumida WHERE UPPER(estado_credito) <> 'PAGADO'"));
+            response.put("clientCount", Api.scalarInt(connection,
+                    "SELECT COUNT(DISTINCT id_cliente) FROM vista_creditos_resumida WHERE saldo > 0"));
             response.put("blockedCount", Api.scalarInt(connection, "SELECT COUNT(*) FROM cliente WHERE estadocredito = 0"));
             Api.ok(exchange, response);
         }

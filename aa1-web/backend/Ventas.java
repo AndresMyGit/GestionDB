@@ -3,10 +3,10 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -39,13 +39,7 @@ public class Ventas implements HttpHandler {
         try (Connection connection = Conexion.getConnection()) {
             List<Map<String, Object>> products = Api.rows(
                     connection,
-                    """
-                    SELECT p.codigobarras, p.nombre, p.descripcion, p.precio, p.stock,
-                           c.idcategoria, c.nombre AS categoria
-                      FROM producto p
-                      LEFT JOIN categoria c ON c.idcategoria = p.idcategoria
-                     ORDER BY p.nombre
-                    """,
+                    Productos.productSelectSql() + " ORDER BY vp.nombre",
                     null,
                     resultSet -> Productos.productRow(resultSet));
 
@@ -63,7 +57,7 @@ public class Ventas implements HttpHandler {
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("products", products);
             response.put("methods", methods);
-            response.put("lastInvoiceId", Api.scalarInt(connection, "SELECT NVL(MAX(idfactura), 0) FROM factura"));
+            response.put("lastInvoiceId", Api.scalarInt(connection, "SELECT NVL(MAX(id_factura), 0) FROM vw_facturas_detalle"));
             Api.ok(exchange, response);
         }
     }
@@ -98,23 +92,7 @@ public class Ventas implements HttpHandler {
                     throw new IllegalArgumentException("El valor recibido no cubre el total");
                 }
 
-                int invoiceId = nextValue(connection, "factura_idfactura_seq");
-                try (PreparedStatement statement = connection.prepareStatement(
-                        """
-                        INSERT INTO factura (idfactura, fecha, total, id_cliente, id_empleado, id_metodo_pago)
-                        VALUES (?, TRUNC(SYSDATE), ?, ?, ?, ?)
-                        """)) {
-                    statement.setInt(1, invoiceId);
-                    statement.setBigDecimal(2, total);
-                    statement.setInt(3, clientId);
-                    if (employeeId > 0) {
-                        statement.setInt(4, employeeId);
-                    } else {
-                        statement.setNull(4, Types.INTEGER);
-                    }
-                    statement.setInt(5, paymentId);
-                    statement.executeUpdate();
-                }
+                int invoiceId = insertInvoice(connection, total, clientId, employeeId, paymentId);
 
                 try (PreparedStatement statement = connection.prepareStatement(
                         """
@@ -182,10 +160,11 @@ public class Ventas implements HttpHandler {
 
             try (PreparedStatement statement = connection.prepareStatement(
                     """
-                    SELECT codigobarras, nombre, precio, stock
-                      FROM producto
-                     WHERE codigobarras = ?
-                     FOR UPDATE
+                    SELECT p.codigobarras, vp.nombre, vp.precio, p.stock
+                      FROM producto p
+                      JOIN vista_productos vp ON vp.codigo = p.codigobarras
+                     WHERE p.codigobarras = ?
+                     FOR UPDATE OF p.stock
                     """)) {
                 statement.setInt(1, code);
                 try (ResultSet resultSet = statement.executeQuery()) {
@@ -214,11 +193,27 @@ public class Ventas implements HttpHandler {
         return items;
     }
 
-    private int nextValue(Connection connection, String sequence) throws Exception {
-        try (Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT " + sequence + ".NEXTVAL FROM dual")) {
-            resultSet.next();
-            return resultSet.getInt(1);
+    private int insertInvoice(Connection connection, BigDecimal total, int clientId, int employeeId, int paymentId)
+            throws Exception {
+        try (CallableStatement statement = connection.prepareCall(
+                """
+                BEGIN
+                    INSERT INTO factura (idfactura, fecha, total, id_cliente, id_empleado, id_metodo_pago)
+                    VALUES (NULL, TRUNC(SYSDATE), ?, ?, ?, ?)
+                    RETURNING idfactura INTO ?;
+                END;
+                """)) {
+            statement.setBigDecimal(1, total);
+            statement.setInt(2, clientId);
+            if (employeeId > 0) {
+                statement.setInt(3, employeeId);
+            } else {
+                statement.setNull(3, Types.INTEGER);
+            }
+            statement.setInt(4, paymentId);
+            statement.registerOutParameter(5, Types.INTEGER);
+            statement.execute();
+            return statement.getInt(5);
         }
     }
 

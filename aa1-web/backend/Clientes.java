@@ -1,11 +1,12 @@
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.Types;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,20 +129,7 @@ public class Clientes implements HttpHandler {
                     return;
                 }
 
-                clientId = nextClientId(connection);
-                try (PreparedStatement statement = connection.prepareStatement(
-                        "INSERT INTO persona (id, nombre, documento, telefono) VALUES (?, ?, ?, ?)")) {
-                    statement.setInt(1, clientId);
-                    statement.setString(2, name);
-                    statement.setString(3, document);
-                    if (phone.isBlank()) {
-                        statement.setNull(4, java.sql.Types.VARCHAR);
-                    } else {
-                        statement.setString(4, phone);
-                    }
-                    statement.executeUpdate();
-                }
-
+                clientId = insertPersona(connection, name, document, phone);
                 resolvedName = name;
                 resolvedPhone = phone;
             }
@@ -251,10 +239,10 @@ public class Clientes implements HttpHandler {
                 """
                 SELECT p.id, p.nombre, p.documento, p.telefono, c.direccion, c.estadocredito,
                        NVL((
-                           SELECT SUM(cr.saldo)
-                             FROM credito cr
-                            WHERE cr.cliente = c.id
-                              AND cr.estado <> 2
+                           SELECT SUM(vc.saldo)
+                             FROM vista_creditos_resumida vc
+                            WHERE vc.id_cliente = c.id
+                              AND UPPER(vc.estado_credito) <> 'PAGADO'
                        ), 0) AS deuda
                   FROM cliente c
                   JOIN persona p ON p.id = c.id
@@ -276,10 +264,10 @@ public class Clientes implements HttpHandler {
                   FROM (
                         SELECT p.id, p.nombre, p.documento, p.telefono, c.direccion, c.estadocredito,
                                NVL((
-                                   SELECT SUM(cr.saldo)
-                                     FROM credito cr
-                                    WHERE cr.cliente = c.id
-                                      AND cr.estado <> 2
+                                   SELECT SUM(vc.saldo)
+                                     FROM vista_creditos_resumida vc
+                                    WHERE vc.id_cliente = c.id
+                                      AND UPPER(vc.estado_credito) <> 'PAGADO'
                                ), 0) AS deuda,
                                CASE
                                    WHEN LOWER(p.documento) = ? THEN 0
@@ -336,6 +324,28 @@ public class Clientes implements HttpHandler {
                 });
     }
 
+    private int insertPersona(Connection connection, String name, String document, String phone) throws Exception {
+        try (CallableStatement statement = connection.prepareCall(
+                """
+                BEGIN
+                    INSERT INTO persona (id, nombre, documento, telefono)
+                    VALUES (NULL, ?, ?, ?)
+                    RETURNING id INTO ?;
+                END;
+                """)) {
+            statement.setString(1, name);
+            statement.setString(2, document);
+            if (phone.isBlank()) {
+                statement.setNull(3, Types.VARCHAR);
+            } else {
+                statement.setString(3, phone);
+            }
+            statement.registerOutParameter(4, Types.INTEGER);
+            statement.execute();
+            return statement.getInt(4);
+        }
+    }
+
     private boolean clientExists(Connection connection, int clientId) throws Exception {
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT COUNT(*) FROM cliente WHERE id = ?")) {
@@ -354,34 +364,6 @@ public class Clientes implements HttpHandler {
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() && resultSet.getInt(1) > 0;
             }
-        }
-    }
-
-    private int nextClientId(Connection connection) throws Exception {
-        String[] sequences = {
-                "persona_id_seq",
-                "persona_seq",
-                "persona_idpersona_seq",
-                "cliente_id_seq",
-                "cliente_seq"
-        };
-
-        for (String sequence : sequences) {
-            try {
-                return nextValue(connection, sequence);
-            } catch (SQLException ignored) {
-                // Usa la primera secuencia existente; si no hay, cae al calculo por maximo.
-            }
-        }
-
-        return Api.scalarInt(connection, "SELECT NVL(MAX(id), 0) + 1 FROM persona");
-    }
-
-    private int nextValue(Connection connection, String sequence) throws Exception {
-        try (Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT " + sequence + ".NEXTVAL FROM dual")) {
-            resultSet.next();
-            return resultSet.getInt(1);
         }
     }
 

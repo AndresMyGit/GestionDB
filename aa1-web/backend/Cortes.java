@@ -29,8 +29,8 @@ public class Cortes implements HttpHandler {
                     SELECT NVL(SUM(total), 0) AS revenue,
                            COUNT(*) AS tickets,
                            NVL(AVG(total), 0) AS average_ticket,
-                           NVL(SUM(CASE WHEN id_metodo_pago = 4 THEN total ELSE 0 END), 0) AS credit_sales
-                      FROM factura
+                           NVL(SUM(CASE WHEN LOWER(metodo_pago) = 'credito' THEN total ELSE 0 END), 0) AS credit_sales
+                      FROM vw_facturas_detalle
                      WHERE EXTRACT(YEAR FROM fecha) = ?
                        AND EXTRACT(MONTH FROM fecha) = ?
                     """,
@@ -50,12 +50,11 @@ public class Cortes implements HttpHandler {
             List<Map<String, Object>> payments = Api.rows(
                     connection,
                     """
-                    SELECT mp.nombre, SUM(f.total) AS total
-                      FROM factura f
-                      JOIN metodo_pago mp ON mp.id = f.id_metodo_pago
-                     WHERE EXTRACT(YEAR FROM f.fecha) = ?
-                       AND EXTRACT(MONTH FROM f.fecha) = ?
-                     GROUP BY mp.nombre
+                    SELECT metodo_pago AS nombre, SUM(total) AS total
+                      FROM vw_facturas_detalle
+                     WHERE EXTRACT(YEAR FROM fecha) = ?
+                       AND EXTRACT(MONTH FROM fecha) = ?
+                     GROUP BY metodo_pago
                      ORDER BY total DESC
                     """,
                     statement -> {
@@ -72,12 +71,11 @@ public class Cortes implements HttpHandler {
             Map<String, Object> topInvoice = Api.one(
                     connection,
                     """
-                    SELECT f.idfactura, f.total, p.nombre AS cliente
-                      FROM factura f
-                      LEFT JOIN persona p ON p.id = f.id_cliente
-                     WHERE EXTRACT(YEAR FROM f.fecha) = ?
-                       AND EXTRACT(MONTH FROM f.fecha) = ?
-                     ORDER BY f.total DESC
+                    SELECT id_factura, total, cliente
+                      FROM vw_facturas_detalle
+                     WHERE EXTRACT(YEAR FROM fecha) = ?
+                       AND EXTRACT(MONTH FROM fecha) = ?
+                     ORDER BY total DESC
                      FETCH FIRST 1 ROWS ONLY
                     """,
                     statement -> {
@@ -86,7 +84,7 @@ public class Cortes implements HttpHandler {
                     },
                     resultSet -> {
                         Map<String, Object> row = new LinkedHashMap<>();
-                        row.put("id", resultSet.getInt("idfactura"));
+                        row.put("id", resultSet.getInt("id_factura"));
                         row.put("total", resultSet.getDouble("total"));
                         row.put("client", Api.text(resultSet, "cliente"));
                         return row;
@@ -97,7 +95,8 @@ public class Cortes implements HttpHandler {
             response.put("year", year);
             response.put("summary", summary);
             response.put("payments", payments);
-            response.put("lowStockCount", Api.scalarInt(connection, "SELECT COUNT(*) FROM producto WHERE stock < 10"));
+            response.put("lowStockCount", Api.scalarInt(connection,
+                    "SELECT COUNT(*) FROM producto p JOIN vista_productos vp ON vp.codigo = p.codigobarras WHERE p.stock < 10"));
             response.put("topInvoice", topInvoice);
             Api.ok(exchange, response);
         } catch (Exception exception) {

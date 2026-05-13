@@ -211,11 +211,21 @@ public final class Api {
     }
 
     public static int callActualizarEstadoVencido(Connection connection) throws SQLException {
-        try (CallableStatement statement = connection.prepareCall("{ ? = call actualizar_estado_vencido() }")) {
-            statement.registerOutParameter(1, Types.NUMERIC);
-            statement.execute();
-            return statement.getInt(1);
+        SQLException lastError = null;
+        String[] functionNames = {"actualizar_estado_vencido", "ADMIN.actualizar_estado_vencido"};
+        for (String functionName : functionNames) {
+            try (CallableStatement statement = connection.prepareCall("{ ? = call " + functionName + "() }")) {
+                statement.registerOutParameter(1, Types.NUMERIC);
+                statement.execute();
+                return statement.getInt(1);
+            } catch (SQLException error) {
+                lastError = error;
+                if (!looksLikeMissingRoutine(error)) {
+                    throw error;
+                }
+            }
         }
+        throw lastError == null ? new SQLException("No se pudo ejecutar actualizar_estado_vencido") : lastError;
     }
 
     public static String text(ResultSet resultSet, String column) throws SQLException {
@@ -240,5 +250,16 @@ public final class Api {
 
     private static String decode(String value) {
         return java.net.URLDecoder.decode(value, StandardCharsets.UTF_8);
+    }
+
+    private static boolean looksLikeMissingRoutine(SQLException error) {
+        String message = error.getMessage();
+        if (message == null) {
+            return false;
+        }
+        String normalized = message.toUpperCase();
+        return normalized.contains("PLS-00201")
+                || normalized.contains("ORA-06550")
+                || normalized.contains("ORA-00904");
     }
 }

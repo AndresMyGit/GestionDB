@@ -918,6 +918,11 @@ function renderInvoices(detail) {
           <strong>${formatMoney(0)}</strong>
         </div>
       </div>
+      ${
+        isManager()
+          ? `<div class="button-row"><button class="remove-button full" type="button" data-annul-invoice="${escapeHtml(detail.id)}">Anular factura</button></div>`
+          : ""
+      }
     </div>
   `;
 }
@@ -927,6 +932,27 @@ async function loadInvoices() {
   state.invoices = data.invoices;
   state.selectedInvoiceId = data.detail?.id || state.invoices[0]?.id || 0;
   renderInvoices(data.detail);
+}
+
+async function annulInvoice(invoiceId) {
+  if (!invoiceId) {
+    return;
+  }
+  const confirmed = window.confirm(`Anular FAC-${invoiceId}?`);
+  if (!confirmed) {
+    return;
+  }
+
+  const result = await api("/facturas", {
+    method: "POST",
+    body: {
+      action: "annul",
+      invoiceId
+    }
+  });
+  state.selectedInvoiceId = 0;
+  await loadInvoices();
+  showToast(result.message || "Factura anulada.");
 }
 
 function renderCuts(data) {
@@ -1561,6 +1587,13 @@ function attachInvoicesEvents() {
     }
     state.selectedInvoiceId = Number(row.dataset.invoicePick);
     loadInvoices().catch((error) => showToast(error.message, "error"));
+  });
+  byId("invoiceDetails").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-annul-invoice]");
+    if (!button) {
+      return;
+    }
+    annulInvoice(Number(button.dataset.annulInvoice)).catch((error) => showToast(error.message, "error"));
   });
 }
 

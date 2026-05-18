@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor U as Usuario
+    participant B as Browser (index.html)
+    participant JS as app.js
+    participant S as GestionDBServer
+    participant L as Login.java
+    participant DB as Oracle DB
+
+    U->>B: Ingresa usuario/contrasena
+    B->>JS: submit loginForm
+    JS->>S: POST /api/login
+    S->>L: handle()
+    L->>DB: SELECT empleado/persona activo
+
+    alt Credenciales validas
+        DB-->>L: employeeId, roleId, role, name
+        L->>DB: call actualizar_estado_vencido()
+        L-->>JS: 200 OK + datos sesion
+        JS->>JS: guarda sesion en localStorage
+        JS-->>B: redireccion a resumen o ventas
+    else Credenciales invalidas
+        DB-->>L: sin coincidencia
+        L-->>JS: 401 error
+        JS-->>B: muestra mensaje de error
+    end

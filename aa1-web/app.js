@@ -15,6 +15,18 @@ const PAGE_TITLES = {
   empleados: "Empleados"
 };
 
+const PAGE_AREAS = {
+  resumen: "Tablero",
+  ventas: "Operacion",
+  productos: "Catalogo",
+  clientes: "Relacion comercial",
+  inventario: "Existencias",
+  credito: "Cartera",
+  facturas: "Documentos",
+  cortes: "Caja",
+  empleados: "Administracion"
+};
+
 const EMPLOYEE_ALLOWED_PAGES = new Set(["ventas", "clientes", "inventario", "credito", "facturas", "cortes"]);
 
 const monthNames = [
@@ -111,8 +123,12 @@ async function api(path, options = {}) {
 }
 
 function redirectTo(pageName) {
+  window.location.href = hrefForPage(pageName);
+}
+
+function hrefForPage(pageName) {
   const target = pageName === "login" ? "index.html" : `${pageName}.html`;
-  window.location.href = `./${target}`;
+  return `./${target}`;
 }
 
 function ensureSession() {
@@ -197,6 +213,52 @@ function showToast(message, tone = "ok") {
   showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+function accessiblePageTrail() {
+  const pages = [];
+  document.querySelectorAll("[data-page-link]").forEach((link) => {
+    const pageName = link.dataset.pageLink;
+    if (!pageName || pages.includes(pageName) || !canAccessPage(pageName)) {
+      return;
+    }
+    pages.push(pageName);
+  });
+  return pages;
+}
+
+function syncFlowBreadcrumb() {
+  const headerContent = document.querySelector(".workspace-header > div");
+  if (!headerContent) {
+    return;
+  }
+
+  headerContent.classList.add("workspace-heading");
+
+  const trail = accessiblePageTrail();
+  const currentIndex = Math.max(trail.indexOf(page), 0);
+  const totalSteps = trail.length || 1;
+  const currentTitle = PAGE_TITLES[page] || "Panel";
+  const areaLabel = PAGE_AREAS[page] || "Modulo";
+  const homePage = defaultPageForSession();
+  const breadcrumb = byId("flowBreadcrumb") || document.createElement("div");
+
+  breadcrumb.id = "flowBreadcrumb";
+  breadcrumb.className = "flow-breadcrumb-shell";
+  breadcrumb.innerHTML = `
+    <div class="flow-breadcrumb-meta">
+      <span class="flow-badge">Ventana ${currentIndex + 1} de ${totalSteps}</span>
+    </div>
+    <nav class="flow-breadcrumb" aria-label="Ubicacion actual">
+      <a class="flow-link" href="${hrefForPage(homePage)}">Inicio</a>
+      <span class="flow-separator" aria-hidden="true">/</span>
+      <span class="flow-area">${escapeHtml(areaLabel)}</span>
+      <span class="flow-separator" aria-hidden="true">/</span>
+      <span class="flow-current" aria-current="page">${escapeHtml(currentTitle)}</span>
+    </nav>
+  `;
+
+  headerContent.appendChild(breadcrumb);
+}
+
 function syncShell() {
   const currentSection = byId("currentSection");
   const todayLabel = byId("todayLabel");
@@ -225,6 +287,8 @@ function syncShell() {
     link.classList.toggle("hidden", !allowed);
     link.classList.toggle("active", link.dataset.pageLink === page);
   });
+
+  syncFlowBreadcrumb();
 }
 
 function getProduct(code) {

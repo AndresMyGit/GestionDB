@@ -894,6 +894,70 @@ body[data-page="login"] .login-mini-icon {
   font-size: clamp(2.1rem, 4vw, 3.1rem);
 }
 
+.workspace-heading {
+  display: grid;
+  gap: 10px;
+}
+
+.flow-breadcrumb-shell {
+  display: grid;
+  gap: 8px;
+}
+
+.flow-breadcrumb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.flow-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid rgba(198, 56, 44, 0.18);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.flow-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.flow-link {
+  color: var(--steel);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.flow-link:hover {
+  color: var(--accent);
+}
+
+.flow-area {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.flow-current {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.flow-separator {
+  color: var(--line-strong);
+  font-weight: 900;
+}
+
 .header-tools {
   display: flex;
   flex-wrap: wrap;

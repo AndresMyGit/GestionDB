@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor O as Operador (empleado/gerente)
+    participant B as Browser (ventas.html)
+    participant JS as app.js
+    participant S as GestionDBServer
+    participant V as Ventas.java
+    participant DB as Oracle DB
+
+    O->>B: Arma carrito + cliente + metodo pago
+    B->>JS: checkout()
+    JS->>S: POST /api/ventas {clientId,payment,employeeId,items,received}
+    S->>V: post()
+
+    V->>DB: BEGIN TX + buscar metodo_pago
+    alt Metodo = Credito
+        V->>DB: validar cliente con credito habilitado
+    end
+
+    loop Por cada item
+        V->>DB: SELECT producto FOR UPDATE
+        DB-->>V: precio y stock
+        V->>V: valida stock y calcula subtotal
+    end
+
+    V->>DB: INSERT factura RETURNING idfactura
+    V->>DB: INSERT detallefactura (batch)
+    V->>DB: COMMIT
+    V-->>JS: 200 {invoiceId,total,change}
+    JS->>JS: limpia carrito y recarga ventas
+    JS-->>B: muestra "Factura FAC-..."
